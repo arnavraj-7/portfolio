@@ -1,13 +1,51 @@
 @import "tailwindcss";
 
-/* @theme {
-  --color-black-100: #000319;
-} */
-
-
 @theme {
   --color-midnight: #121063;
   --color-tahiti: #3ab7bf;
   --color-bermuda: #78dcca;
-  --color-black-100:#000319
+  --color-black-100: #000319;
+}
+
+/* Define the custom property for angle with proper typing */
+@property --bg-angle {
+  inherits: false;
+  initial-value: 0deg;
+  syntax: "<angle>";
+}
+
+/* Keyframes for continuous rotation */
+@keyframes border-rotation {
+  to {
+    --bg-angle: 360deg;
+  }
+}
+
+@layer utilities {
+  /* Custom animation class for border rotation */
+  .animate-border-rotation {
+    --bg-angle: 0deg;
+    animation: border-rotation 3s linear infinite;
+    border: 2px solid transparent;
+  }
+  
+  /* Hover state to speed up animation */
+  .animate-border-rotation:hover {
+    animation-duration: 1s;
+  }
+  
+  /* Legacy shimmer animation (kept for compatibility) */
+  @keyframes shimmer {
+    0% {
+      background-position: 0% 50%;
+    }
+    100% {
+      background-position: 100% 50%;
+    }
+  }
+
+  .animate-shimmer {
+    animation: shimmer 4s linear infinite;
+    background-size: 400% 400%;
+  }
 }
