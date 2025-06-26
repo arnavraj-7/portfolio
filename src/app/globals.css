@@ -16,6 +16,9 @@
 
 /* Keyframes for continuous rotation */
 @keyframes border-rotation {
+  from {
+    --bg-angle: 0deg;
+  }
   to {
     --bg-angle: 360deg;
   }
@@ -24,28 +27,26 @@
 @layer utilities {
   /* Custom animation class for border rotation */
   .animate-border-rotation {
-    --bg-angle: 0deg;
     animation: border-rotation 3s linear infinite;
-    border: 2px solid transparent;
   }
-  
-  /* Hover state to speed up animation */
-  .animate-border-rotation:hover {
-    animation-duration: 1s;
-  }
-  
-  /* Legacy shimmer animation (kept for compatibility) */
-  @keyframes shimmer {
-    0% {
-      background-position: 0% 50%;
-    }
-    100% {
-      background-position: 100% 50%;
-    }
+ 
+
+  .animated-border {
+    @apply relative rounded-lg p-[2px];
+    background: conic-gradient(
+      from var(--bg-angle),
+      #000319,
+      #3730a3,
+      #8b5cf6,
+      #cbacf9,
+      #a855f7,
+      #4c1d95,
+      #000319
+    );
+    animation: border-rotation 3s linear infinite;
   }
 
-  .animate-shimmer {
-    animation: shimmer 4s linear infinite;
-    background-size: 400% 400%;
+  .content {
+    @apply rounded-lg flex justify-center items-center h-full w-full bg-gradient-to-b from-[#161A31] to-[#06091F] px-6 py-3;
   }
 }

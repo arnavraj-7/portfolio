@@ -1,6 +1,6 @@
 "use client";
 import React from 'react'
-import { inter, urbanist } from './utils/fonts'
+import { inter, urbanist } from '../utils/fonts'
 import "./globals.css";
 import { ArrowUp, ArrowUpRight } from 'lucide-react'
 import { motion } from 'framer-motion'
@@ -23,18 +23,14 @@ const page = () => {
       </div>
       <Link href={"#"}>
         <motion.button 
-          className='animate-border-rotation rounded-lg border-2 border-transparent bg-gradient-to-br from-[#161A31] to-[#06091F] p-4 h-10 flex justify-center items-center text-sm relative overflow-hidden hover:animation-play-state-running'
-          style={{
-            background: `
-              linear-gradient(to bottom, #161A31, #06091F) padding-box,
-              conic-gradient(from var(--bg-angle), #CBACF9, #161A31, #CBACF9, #06091F, #CBACF9) border-box
-            `
-          }}
+          className='animated-border'
         >
+          <div className='content'>
           See my work 
           <span className='ml-1'>
             <ArrowUpRight size={16} />
           </span>
+          </div>
         </motion.button>
       </Link>
     </div>
