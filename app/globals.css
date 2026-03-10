@@ -1,26 +1,168 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ─── Clash Display ────────────────────────────────── */
+@font-face {
+  font-family: 'ClashDisplay';
+  src: url('/ClashDisplay_Complete/Fonts/WEB/fonts/ClashDisplay-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'ClashDisplay';
+  src: url('/ClashDisplay_Complete/Fonts/WEB/fonts/ClashDisplay-Semibold.woff2') format('woff2');
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'ClashDisplay';
+  src: url('/ClashDisplay_Complete/Fonts/WEB/fonts/ClashDisplay-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
 }
 
+/* ─── Satoshi ───────────────────────────────────────── */
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/Satoshi_Complete/Fonts/WEB/fonts/Satoshi-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/Satoshi_Complete/Fonts/WEB/fonts/Satoshi-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/Satoshi_Complete/Fonts/WEB/fonts/Satoshi-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+
+/* ─── Impasse (kept as fallback/accent) ─────────────── */
+@font-face {
+  font-family: 'Impasse';
+  src: url('/impasse/Impasse.otf') format('opentype');
+  font-weight: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'ImpasseBold';
+  src: url('/impasse/ImpasseBold.otf') format('opentype');
+  font-weight: bold;
+  font-display: swap;
+}
+
+/* ─── Tailwind Theme ────────────────────────────────── */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-clash: 'ClashDisplay', 'Helvetica Neue', Arial, sans-serif;
+  --font-satoshi: 'Satoshi', 'Helvetica Neue', Arial, sans-serif;
+  --font-impasse: 'Impasse', sans-serif;
+  --font-impasse-bold: 'ImpasseBold', sans-serif;
+  --color-background: #06040f;
+  --color-foreground: #ffffff;
+  --color-violet-dim: rgba(139, 92, 246, 0.15);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─── Base ──────────────────────────────────────────── */
+:root {
+  --bg: #06040f;
+}
+
+html, body {
+  height: 100%;
+  overscroll-behavior: none;
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: #ffffff;
+  font-family: 'Satoshi', 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: rgba(139, 92, 246, 0.4);
+  color: #fff;
+}
+
+/* ─── GPU layer hints ───────────────────────────────── */
+.hero-item {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* ─── Scrollbar ─────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.3); border-radius: 2px; }
+
+/* ─── Animations ────────────────────────────────────── */
+@keyframes horizon-breath {
+  0%, 100% {
+    opacity: 0.7;
+    transform: translateX(-50%) scaleX(1) translateY(0px);
+    box-shadow:
+      0 -10px 50px rgba(139,92,246,0.55),
+      0 -26px 95px rgba(109,40,217,0.3),
+      0 -52px 155px rgba(109,40,217,0.12),
+      inset 0 26px 75px rgba(109,40,217,0.22);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) scaleX(1.04) translateY(-10px);
+    box-shadow:
+      0 -18px 80px rgba(167,139,250,0.85),
+      0 -40px 140px rgba(139,92,246,0.55),
+      0 -80px 220px rgba(109,40,217,0.25),
+      inset 0 36px 110px rgba(139,92,246,0.4);
+  }
+}
+
+@keyframes horizon-glow-breath {
+  0%, 100% {
+    opacity: 0.55;
+    transform: scaleY(0.92);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleY(1.08);
+  }
+}
+
+@keyframes badge-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+@keyframes scroll-line {
+  0% { transform: scaleY(0); transform-origin: top; opacity: 1; }
+  100% { transform: scaleY(1); transform-origin: top; opacity: 0; }
+}
+
+/* Spinning animated border for CTA button */
+@keyframes spin-border {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to   { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.animate-horizon-arc {
+  animation: horizon-breath 7s ease-in-out infinite;
+}
+
+.animate-horizon-glow {
+  animation: horizon-glow-breath 7s ease-in-out infinite;
+}
+
+.animate-badge-dot {
+  animation: badge-pulse 2.5s ease-in-out infinite;
+}
+
+.animate-spin-border {
+  animation: spin-border 3.5s linear infinite;
 }

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "mcp__ide__getDiagnostics",
+      "Bash(cd \"E:/portfolio\" && sed -i 's/max-w-\\\\[1400px\\\\]/max-w-350/g; s/max-w-\\\\[220px\\\\]/max-w-55/g' app/page.tsx)"
+    ]
+  }
+}
