@@ -65,30 +65,31 @@ export function AjModel({ animation = 'BreathingIdle', ...props }: AjModelProps)
     }
   }, [diffuse, normal, spec, facialMap])
 
-  // Handle Animation Switching
+  // Handle Animation Switching — crossFadeTo prevents T-pose flash
   useEffect(() => {
     if (!actions || !actions[animation]) return
 
-    // Fade out all currently playing animations
-    Object.values(actions).forEach((action) => {
-      if (action && action.isRunning()) {
-        action.fadeOut(0.5)
-      }
-    })
+    const newAction = actions[animation]
+    if (!newAction) return
 
-    // Fade in and play the requested animation
-    const currentAction = actions[animation]
-    if (currentAction) {
-      // Slow down BreathingIdle for a more 'zen' premium feel
-      if (animation === 'BreathingIdle') {
-        currentAction.setEffectiveTimeScale(0.8) // 20% slower
-      } else {
-        currentAction.setEffectiveTimeScale(1.0) // Normal speed for others
-      }
-      
-      currentAction.reset().fadeIn(0.5).play()
+    if (animation === 'BreathingIdle') {
+      newAction.setEffectiveTimeScale(0.8)
+    } else {
+      newAction.setEffectiveTimeScale(1.0)
     }
 
+    // Find a currently running action to crossfade from
+    const current = Object.values(actions).find(
+      (a) => a && a !== newAction && a.isRunning()
+    )
+
+    if (current) {
+      newAction.reset()
+      current.crossFadeTo(newAction, 0.5, false)
+      newAction.play()
+    } else {
+      newAction.reset().fadeIn(0.5).play()
+    }
   }, [actions, animation])
 
   return (

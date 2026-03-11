@@ -4,11 +4,11 @@ import {
   Suspense,
   useEffect,
   useRef,
-  useState,
   useCallback,
+  useState,
 } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { Environment, Center, useGLTF } from '@react-three/drei'
+import { Environment, useGLTF } from '@react-three/drei'
 import { AjModel, ActionName } from './AjModel'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -55,6 +55,8 @@ function AvatarScene({ onReady }: { onReady: () => void }) {
   const [anim, setAnim] = useState<ActionName>('BreathingIdle')
   // Manual mouse tracking via window — bypasses pointer-events:none
   const mousePos = useRef({ x: 0, y: 0 })
+  // 0 = hero (cursor tracking), 1 = work section (fixed look right)
+  const scrollWeight = useRef(0)
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
@@ -92,13 +94,88 @@ function AvatarScene({ onReady }: { onReady: () => void }) {
     gsap.to(groupRef.current.scale, {
       x: 1, y: 1, z: 1, duration: 1.3, ease: 'power3.out', delay: 0.2,
     })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
-    const wave = setTimeout(() => {
-      setAnim('WavingGesture')
-      setTimeout(() => setAnim('BreathingIdle'), 2600)
-    }, 1800)
+  // Scroll-driven: avatar slides left as work section enters
+  useEffect(() => {
+    if (!groupRef.current) return
 
-    return () => clearTimeout(wave)
+    const scrollConfig = {
+      trigger: '#work',
+      start: 'top 90%',
+      end: 'top 50%',
+      scrub: 1.5,
+    }
+
+    const xTween = gsap.to(groupRef.current.position, {
+      x: -2.6,
+      ease: 'none',
+      scrollTrigger: scrollConfig,
+    })
+
+    // Rotate body to face right (toward projects)
+    const rotateTween = gsap.to(groupRef.current.rotation, {
+      y: 0.75,
+      ease: 'none',
+      scrollTrigger: scrollConfig,
+    })
+
+    // Head tracking: 0 = cursor (hero), 1 = fixed right (work), 0 = cursor (about)
+    const headWeightIn = ScrollTrigger.create({
+      trigger: '#work',
+      start: 'top 90%',
+      end: 'top 50%',
+      onUpdate: (self) => { scrollWeight.current = self.progress },
+      onLeaveBack: () => { scrollWeight.current = 0 },
+    })
+    const headWeightOut = ScrollTrigger.create({
+      trigger: '#about',
+      start: 'top 80%',
+      end: 'top 40%',
+      onUpdate: (self) => { scrollWeight.current = 1 - self.progress },
+      onLeave: () => { scrollWeight.current = 0 },
+    })
+
+    // About: avatar slides to RIGHT side, faces camera forward
+    const aboutConfig = { trigger: '#about', start: 'top 85%', end: 'top 25%', scrub: 1.5 }
+    const aboutXTween = gsap.to(groupRef.current.position, {
+      x: 1.6, ease: 'none', scrollTrigger: aboutConfig,
+    })
+    const aboutRotateTween = gsap.to(groupRef.current.rotation, {
+      y: -0.5, ease: 'none', scrollTrigger: aboutConfig,
+    })
+
+    const animTrigger = ScrollTrigger.create({
+      trigger: '#work',
+      start: 'top 55%',
+      onEnter: () => {
+        setAnim('ThumbsUp')
+        setTimeout(() => setAnim('BreathingIdle'), 2500)
+      },
+      onLeaveBack: () => setAnim('BreathingIdle'),
+    })
+
+    const aboutAnimTrigger = ScrollTrigger.create({
+      trigger: '#about',
+      start: 'top 60%',
+      onEnter: () => {
+        setAnim('WavingGesture')
+        setTimeout(() => setAnim('BreathingIdle'), 2600)
+      },
+      onLeaveBack: () => setAnim('BreathingIdle'),
+    })
+
+    return () => {
+      xTween.kill()
+      rotateTween.kill()
+      headWeightIn.kill()
+      headWeightOut.kill()
+      aboutXTween.kill()
+      aboutRotateTween.kill()
+      animTrigger.kill()
+      aboutAnimTrigger.kill()
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -107,22 +184,26 @@ function AvatarScene({ onReady }: { onReady: () => void }) {
     const head = modelRef.current.getObjectByName('mixamorigHead')
     const mx = mousePos.current.x
     const my = mousePos.current.y
+    const w = scrollWeight.current  // 0 = hero, 1 = work section
+
     if (head) {
-      head.rotation.y = THREE.MathUtils.lerp(head.rotation.y, mx * 0.35, 0.06)
-      head.rotation.x = THREE.MathUtils.lerp(head.rotation.x, -my * 0.15, 0.06)
+      // In hero: follow cursor. In work: look right toward cards. Blend between.
+      const targetY = THREE.MathUtils.lerp(mx * 0.35, 0.3, w)
+      const targetX = THREE.MathUtils.lerp(-my * 0.15, 0, w)
+      head.rotation.y = THREE.MathUtils.lerp(head.rotation.y, targetY, 0.06)
+      head.rotation.x = THREE.MathUtils.lerp(head.rotation.x, targetX, 0.06)
     } else {
+      const targetY = THREE.MathUtils.lerp(mx * 0.12, 0.2, w)
       modelRef.current.rotation.y = THREE.MathUtils.lerp(
-        modelRef.current.rotation.y, mx * 0.12, 0.05
+        modelRef.current.rotation.y, targetY, 0.05
       )
     }
   })
 
   return (
-    <group ref={groupRef} position={[0, -3, 0]}>
+    <group ref={groupRef}>
       <group ref={modelRef}>
-        <Center>
-          <AjModel scale={0.035} animation={anim} />
-        </Center>
+        <AjModel scale={0.018} animation={anim} />
       </group>
     </group>
   )
@@ -178,6 +259,54 @@ function AnimatedBorderButton({ href, children }: { href: string; children: Reac
 }
 
 /* ─────────────────────────────────────────────────────
+   PROJECTS DATA
+───────────────────────────────────────────────────── */
+const PROJECTS = [
+  {
+    num: '01',
+    name: 'Dreamvator',
+    type: 'Aviation EdTech Platform',
+    desc: 'A full-stack aviation education platform featuring insightful blogs, resources, and tools for the next generation of aviators.',
+    stack: ['Next.js', 'Supabase'],
+    url: 'https://www.dreamvator.com',
+    year: '2024',
+  },
+  {
+    num: '02',
+    name: 'Odd Planet',
+    type: 'Marketing Agency',
+    desc: 'A striking marketing agency website crafted for brand identity and conversion.',
+    stack: ['Next.js', 'Vercel'],
+    url: 'https://oddplanet.vercel.app/',
+    year: '2024',
+  },
+  {
+    num: '03',
+    name: 'Untitled',
+    type: 'Coming Soon',
+    desc: null,
+    stack: [] as string[],
+    url: null,
+    year: '2025',
+  },
+]
+
+const STACK = [
+  { name: 'Next.js',      category: 'Framework'     },
+  { name: 'React',        category: 'UI Library'    },
+  { name: 'TypeScript',   category: 'Language'      },
+  { name: 'Supabase',     category: 'Backend & DB'  },
+  { name: 'Tailwind CSS', category: 'Styling'       },
+  { name: 'Node.js',      category: 'Runtime'       },
+  { name: 'PostgreSQL',   category: 'Database'      },
+  { name: 'Three.js',     category: '3D & WebGL'    },
+  { name: 'GSAP',         category: 'Animation'     },
+  { name: 'Figma',        category: 'Design'        },
+  { name: 'Vercel',       category: 'Deployment'    },
+  { name: 'Git',          category: 'Version Control'},
+]
+
+/* ─────────────────────────────────────────────────────
    MAIN PAGE
 ───────────────────────────────────────────────────── */
 export default function PortfolioPage() {
@@ -231,6 +360,88 @@ export default function PortfolioPage() {
         },
         '-=0.3'
       )
+
+      // Navbar fades out as user starts scrolling
+      gsap.to(navRef.current, {
+        opacity: 0,
+        y: -8,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: '#hero',
+          start: 'top top',
+          end: '18% top',
+          scrub: 1,
+        },
+      })
+
+      // Parallax on horizon background
+      gsap.to('.horizon-glow', {
+        y: -80,
+        ease: 'none',
+        scrollTrigger: { trigger: 'body', start: 'top top', end: 'bottom bottom', scrub: true },
+      })
+      gsap.to('.horizon-arc', {
+        y: -40,
+        ease: 'none',
+        scrollTrigger: { trigger: 'body', start: 'top top', end: 'bottom bottom', scrub: true },
+      })
+
+      // Hero exit on scroll — left col drifts left, right col drifts right
+      gsap.to('.hero-left', {
+        x: -28, opacity: 0, ease: 'none',
+        scrollTrigger: { trigger: '#hero', start: 'top top', end: '35% top', scrub: 1 },
+      })
+      gsap.to('.hero-right', {
+        x: 28, opacity: 0, ease: 'none',
+        scrollTrigger: { trigger: '#hero', start: 'top top', end: '35% top', scrub: 1 },
+      })
+
+      // Work section entrance
+      gsap.fromTo('.work-heading',
+        { x: 24, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.7, ease: 'power2.out', scrollTrigger: { trigger: '.work-heading', start: 'top 88%' } }
+      )
+      gsap.fromTo('.work-card',
+        { x: 32, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.6, stagger: 0.12, ease: 'power2.out', scrollTrigger: { trigger: '.work-card', start: 'top 88%' } }
+      )
+
+      // About
+      gsap.fromTo('.about-heading',
+        { x: 24, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.7, ease: 'power2.out', scrollTrigger: { trigger: '.about-heading', start: 'top 88%' } }
+      )
+      gsap.fromTo('.about-item',
+        { y: 20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.6, stagger: 0.1, ease: 'power2.out', scrollTrigger: { trigger: '.about-heading', start: 'top 75%' } }
+      )
+
+      // Tech stack
+      gsap.fromTo('.tech-heading',
+        { y: 20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.7, ease: 'power2.out', scrollTrigger: { trigger: '.tech-heading', start: 'top 88%' } }
+      )
+      gsap.fromTo('.tech-card',
+        { x: -20, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.5, stagger: 0.06, ease: 'power2.out', scrollTrigger: { trigger: '.tech-card', start: 'top 88%' } }
+      )
+
+      // Fade avatar out as tech section enters, back in when scrolling up
+      gsap.to('.avatar-canvas', {
+        opacity: 0,
+        ease: 'none',
+        scrollTrigger: { trigger: '#tech', start: 'top 70%', end: 'top 20%', scrub: 1 },
+      })
+
+      // Contact
+      gsap.fromTo('.contact-heading',
+        { y: 24, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.7, ease: 'power2.out', scrollTrigger: { trigger: '.contact-heading', start: 'top 88%' } }
+      )
+      gsap.fromTo('.contact-form',
+        { y: 20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.6, stagger: 0.08, ease: 'power2.out', scrollTrigger: { trigger: '.contact-form', start: 'top 85%' } }
+      )
     })
     return () => ctx.revert()
   }, [])
@@ -259,7 +470,7 @@ export default function PortfolioPage() {
 
         {/* Horizon atmospheric glow */}
         <div
-          className="absolute bottom-0 left-0 right-0 animate-horizon-glow"
+          className="horizon-glow absolute bottom-0 left-0 right-0 animate-horizon-glow"
           style={{
             height: '58vh',
             background: 'radial-gradient(ellipse 95% 68% at 50% 100%, rgba(109,40,217,0.75) 0%, rgba(76,29,149,0.45) 26%, rgba(49,17,97,0.15) 50%, transparent 70%)',
@@ -268,7 +479,7 @@ export default function PortfolioPage() {
 
         {/* Primary horizon arc */}
         <div
-          className="absolute left-1/2 animate-horizon-arc"
+          className="horizon-arc absolute left-1/2 animate-horizon-arc"
           style={{
             bottom: '-18vh', width: '160vw', height: '52vh',
             borderRadius: '50%',
@@ -282,7 +493,7 @@ export default function PortfolioPage() {
       </div>
 
       {/* ── 3D CANVAS ──────────────────────────────── */}
-      <div className="fixed inset-0 z-10 pointer-events-none">
+      <div className="avatar-canvas fixed inset-0 z-10 pointer-events-none">
         <Canvas
           gl={{ alpha: true, antialias: true, powerPreference: 'high-performance' }}
           camera={{ position: [0, 0.3, 4], fov: 44 }}
@@ -367,7 +578,7 @@ export default function PortfolioPage() {
           >
 
             {/* ── LEFT COLUMN ─ name + socials ─── */}
-            <div className="hidden md:flex flex-col justify-between pt-24 pb-16 pr-8">
+            <div className="hero-left hidden md:flex flex-col justify-between pt-24 pb-16 pr-8">
 
               {/* Name block */}
               <div className="flex flex-col gap-3">
@@ -434,24 +645,6 @@ export default function PortfolioPage() {
                   </a>
                 ))}
 
-                {/* Divider + location grouped with socials */}
-                <div
-                  className="flex items-center gap-2 pt-1"
-                  style={{ color: 'rgba(255,255,255,0.14)' }}
-                >
-                  <div className="w-4 h-px" style={{ background: 'rgba(255,255,255,0.08)' }} />
-                  <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                    style={{ color: 'rgba(167,139,250,0.5)', flexShrink: 0 }}>
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                    <circle cx="12" cy="10" r="3" />
-                  </svg>
-                  <span
-                    className="text-[9px] tracking-[0.3em] uppercase"
-                    style={{ fontFamily: 'Satoshi, sans-serif' }}
-                  >
-                    India
-                  </span>
-                </div>
               </div>
             </div>
 
@@ -459,11 +652,10 @@ export default function PortfolioPage() {
             <div className="hidden md:block" />
 
             {/* ── RIGHT COLUMN ─ role + CTAs ─── */}
-            <div className="hidden md:flex flex-col justify-between pt-24 pb-16 pl-8">
+            <div className="hero-right hidden md:flex flex-col pt-24 pb-16 pl-16">
 
-              {/* Top block — role + tagline + CTAs */}
+              {/* Top block — role + divider + tagline + CTAs */}
               <div className="flex flex-col gap-7">
-                {/* Role label */}
                 <div
                   className="hero-item opacity-0 flex flex-col gap-1"
                   style={{ fontFamily: 'Satoshi, sans-serif', color: 'rgba(255,255,255,0.22)' }}
@@ -472,10 +664,8 @@ export default function PortfolioPage() {
                   <span className="text-[10px] tracking-[0.3em] uppercase">CPO @ Dreamvator</span>
                 </div>
 
-                {/* Divider */}
                 <div className="hero-item opacity-0 w-8 h-px" style={{ background: 'rgba(139,92,246,0.35)' }} />
 
-                {/* Tagline */}
                 <p
                   className="hero-item opacity-0 text-[15px] leading-relaxed max-w-55"
                   style={{ fontFamily: 'Satoshi, sans-serif', color: 'rgba(148,163,184,0.55)' }}
@@ -483,7 +673,6 @@ export default function PortfolioPage() {
                   Engineering digital experiences that matter.
                 </p>
 
-                {/* CTAs */}
                 <div
                   className="hero-item opacity-0 flex flex-col gap-3 items-start"
                   style={{ pointerEvents: 'auto' }}
@@ -501,6 +690,24 @@ export default function PortfolioPage() {
                       <path d="M5 12h14M12 5l7 7-7 7" />
                     </svg>
                   </a>
+                </div>
+
+                {/* India */}
+                <div
+                  className="hero-item opacity-0 flex items-center gap-2 pt-1"
+                  style={{ color: 'rgba(255,255,255,0.14)' }}
+                >
+                  <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                    style={{ color: 'rgba(167,139,250,0.5)', flexShrink: 0 }}>
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
+                  <span
+                    className="text-[9px] tracking-[0.3em] uppercase"
+                    style={{ fontFamily: 'Satoshi, sans-serif' }}
+                  >
+                    India
+                  </span>
                 </div>
               </div>
 
@@ -559,13 +766,469 @@ export default function PortfolioPage() {
           </div>
         </section>
 
-        {/* Placeholder */}
-        <section id="work" className="min-h-screen flex items-center justify-center">
-          <p className="text-[11px] tracking-widest uppercase"
-            style={{ fontFamily: 'Satoshi, sans-serif', color: 'rgba(255,255,255,0.06)' }}>
-            Work section — coming next
-          </p>
+        {/* ── WORK SECTION ───────────────────────── */}
+        <section id="work" className="relative min-h-[160vh]">
+          {/* Large top gap — avatar finishes moving before content appears */}
+          <div className="max-w-350 mx-auto px-8 md:px-14 pt-[42vh] pb-28">
+            <div className="md:pl-[36%]">
+              {/* Frosted panel so content is readable over avatar/glow */}
+              <div style={{
+                background: 'rgba(6,4,15,0.82)',
+                backdropFilter: 'blur(24px)',
+                WebkitBackdropFilter: 'blur(24px)',
+                borderRadius: 16,
+                border: '1px solid rgba(139,92,246,0.1)',
+                padding: '40px 36px',
+              }}>
+
+              {/* Heading */}
+              <div className="work-heading mb-16">
+                <p style={{
+                  fontFamily: 'Satoshi, sans-serif',
+                  fontSize: 10,
+                  letterSpacing: '0.4em',
+                  textTransform: 'uppercase',
+                  color: 'rgba(167,139,250,0.45)',
+                  marginBottom: 14,
+                }}>
+                  Selected Work
+                </p>
+                <h2 style={{
+                  fontFamily: 'ClashDisplay, sans-serif',
+                  fontSize: 'clamp(44px, 5vw, 68px)',
+                  fontWeight: 700,
+                  letterSpacing: '-0.03em',
+                  lineHeight: 1,
+                  color: 'rgba(255,255,255,0.9)',
+                }}>
+                  Work.
+                </h2>
+                <div style={{ width: 40, height: 1, background: 'rgba(139,92,246,0.35)', marginTop: 20 }} />
+              </div>
+
+              {/* Project list */}
+              <div>
+                {PROJECTS.map((p) => (
+                  <div
+                    key={p.num}
+                    className="work-card group relative"
+                    style={{
+                      borderTop: '1px solid rgba(255,255,255,0.05)',
+                      padding: '32px 0 32px 20px',
+                      transition: 'padding-left 0.3s ease',
+                    }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.paddingLeft = '28px' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.paddingLeft = '20px' }}
+                  >
+                    {/* Left hover accent */}
+                    <div
+                      className="absolute left-0 top-0 bottom-0 w-[2px] scale-y-0 group-hover:scale-y-100 origin-top transition-transform duration-500"
+                      style={{ background: 'rgba(139,92,246,0.6)' }}
+                    />
+
+                    <div className="flex items-start justify-between gap-6">
+                      <div className="flex-1">
+                        {/* Number + type + year */}
+                        <div className="flex items-center gap-4 mb-3" style={{ color: 'rgba(255,255,255,0.18)' }}>
+                          <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 10, letterSpacing: '0.3em', color: 'rgba(167,139,250,0.5)' }}>
+                            {p.num}
+                          </span>
+                          <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 10, letterSpacing: '0.25em', textTransform: 'uppercase' }}>
+                            {p.type}
+                          </span>
+                          <span className="ml-auto" style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 10, letterSpacing: '0.1em' }}>
+                            {p.year}
+                          </span>
+                        </div>
+
+                        {/* Name */}
+                        <h3
+                          className="transition-colors duration-300"
+                          style={{
+                            fontFamily: 'ClashDisplay, sans-serif',
+                            fontSize: 'clamp(22px, 2.5vw, 32px)',
+                            fontWeight: 700,
+                            letterSpacing: '-0.02em',
+                            color: p.url ? 'rgba(255,255,255,0.82)' : 'rgba(255,255,255,0.25)',
+                            marginBottom: 10,
+                          }}
+                        >
+                          {p.name}
+                        </h3>
+
+                        {/* Description */}
+                        {p.desc && (
+                          <p style={{
+                            fontFamily: 'Satoshi, sans-serif',
+                            fontSize: 13,
+                            lineHeight: 1.65,
+                            color: 'rgba(148,163,184,0.45)',
+                            maxWidth: 420,
+                            marginBottom: 14,
+                          }}>
+                            {p.desc}
+                          </p>
+                        )}
+
+                        {/* Stack tags */}
+                        {p.stack.length > 0 && (
+                          <div className="flex items-center gap-2">
+                            {p.stack.map(tag => (
+                              <span key={tag} style={{
+                                fontFamily: 'Satoshi, sans-serif',
+                                fontSize: 10,
+                                padding: '3px 10px',
+                                borderRadius: 999,
+                                border: '1px solid rgba(255,255,255,0.07)',
+                                color: 'rgba(255,255,255,0.28)',
+                                letterSpacing: '0.05em',
+                              }}>
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Visit link */}
+                      {p.url && (
+                        <a
+                          href={p.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="shrink-0 mt-1 flex items-center gap-1.5 transition-all duration-300"
+                          style={{
+                            fontFamily: 'Satoshi, sans-serif',
+                            fontSize: 10,
+                            letterSpacing: '0.3em',
+                            textTransform: 'uppercase',
+                            color: 'rgba(255,255,255,0.18)',
+                            pointerEvents: 'auto',
+                          }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(167,139,250,0.9)' }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.18)' }}
+                        >
+                          Visit
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M7 17L17 7M17 7H7M17 7v10" />
+                          </svg>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {/* Bottom border */}
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }} />
+              </div>
+
+              </div>{/* end frosted panel */}
+            </div>
+          </div>
         </section>
+        {/* ── ABOUT SECTION ──────────────────────── */}
+        <section id="about" className="relative min-h-screen py-28">
+          <div className="max-w-350 mx-auto px-8 md:px-14 pt-[45vh]">
+            {/* Card on LEFT, avatar on RIGHT */}
+            <div className="md:pr-[46%]">
+              <div style={{
+                background: 'rgba(6,4,15,0.82)',
+                backdropFilter: 'blur(24px)',
+                WebkitBackdropFilter: 'blur(24px)',
+                borderRadius: 16,
+                border: '1px solid rgba(139,92,246,0.1)',
+                padding: '40px 36px',
+              }}>
+
+                <div className="about-heading mb-10">
+                  <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 10, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'rgba(167,139,250,0.45)', marginBottom: 14 }}>
+                    About Me
+                  </p>
+                  <h2 style={{ fontFamily: 'ClashDisplay, sans-serif', fontSize: 'clamp(38px, 4.5vw, 60px)', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.05, color: 'rgba(255,255,255,0.9)' }}>
+                    A builder<br />at heart.
+                  </h2>
+                  <div style={{ width: 40, height: 1, background: 'rgba(139,92,246,0.35)', marginTop: 20 }} />
+                </div>
+
+                <p className="about-item" style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 14, lineHeight: 1.8, color: 'rgba(148,163,184,0.6)', maxWidth: 420, marginBottom: 32 }}>
+                  I&apos;m Arnav — a full-stack developer and CPO co-building Dreamvator from India. I care about clean code, thoughtful UI, and the space where product thinking meets engineering.
+                </p>
+
+                <div className="about-item" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 28 }}>
+                  <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 10, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(167,139,250,0.4)', marginBottom: 16 }}>
+                    What I do
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {[
+                      'Full-stack Web & App Development',
+                      'Product Strategy & Roadmapping',
+                      'UI/UX with a focus on interactions',
+                      'EdTech platform building at Dreamvator',
+                    ].map((item) => (
+                      <div key={item} className="flex items-center gap-3" style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>
+                        <span style={{ color: 'rgba(139,92,246,0.6)', fontSize: 10 }}>→</span>
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </section>
+
+                {/* ── TECH STACK SECTION ─────────────────── */}
+        <section id="tech" className="relative py-28" style={{ background: '#06040f' }}>
+          <div className="max-w-350 mx-auto px-8 md:px-14">
+
+            <div className="tech-heading mb-16">
+              <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 10, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'rgba(167,139,250,0.45)', marginBottom: 14 }}>
+                Tools &amp; Technologies
+              </p>
+              <h2 style={{ fontFamily: 'ClashDisplay, sans-serif', fontSize: 'clamp(36px, 4vw, 56px)', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1, color: 'rgba(255,255,255,0.88)' }}>
+                The Stack.
+              </h2>
+            </div>
+
+            {/* Editorial list */}
+            <div>
+              {STACK.slice(0, 8).map((item, i) => (
+                <div
+                  key={item.name}
+                  className="tech-card group"
+                  style={{
+                    borderTop: '1px solid rgba(255,255,255,0.05)',
+                    display: 'grid',
+                    gridTemplateColumns: '40px 1fr auto',
+                    alignItems: 'center',
+                    gap: 24,
+                    padding: '20px 0',
+                    cursor: 'default',
+                    transition: 'padding-left 0.3s ease',
+                  }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLElement).style.paddingLeft = '12px'
+                    const name = e.currentTarget.querySelector('.tech-name') as HTMLElement
+                    if (name) name.style.color = '#fff'
+                    const bar = e.currentTarget.querySelector('.tech-bar') as HTMLElement
+                    if (bar) bar.style.background = 'rgba(139,92,246,0.6)'
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLElement).style.paddingLeft = '0'
+                    const name = e.currentTarget.querySelector('.tech-name') as HTMLElement
+                    if (name) name.style.color = 'rgba(255,255,255,0.72)'
+                    const bar = e.currentTarget.querySelector('.tech-bar') as HTMLElement
+                    if (bar) bar.style.background = 'rgba(255,255,255,0.04)'
+                  }}
+                >
+                  <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 10, color: 'rgba(139,92,246,0.5)', letterSpacing: '0.15em' }}>
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    <div className="tech-bar" style={{ width: 2, height: 24, background: 'rgba(255,255,255,0.04)', borderRadius: 1, flexShrink: 0, transition: 'background 0.3s' }} />
+                    <span
+                      className="tech-name"
+                      style={{ fontFamily: 'ClashDisplay, sans-serif', fontSize: 'clamp(22px, 2.8vw, 36px)', fontWeight: 600, letterSpacing: '-0.02em', color: 'rgba(255,255,255,0.72)', transition: 'color 0.3s' }}
+                    >
+                      {item.name}
+                    </span>
+                  </div>
+                  <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 10, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.2)' }}>
+                    {item.category}
+                  </span>
+                </div>
+              ))}
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }} />
+            </div>
+
+            {/* Infinite marquee — remaining + repeated */}
+            <div style={{ marginTop: 48, overflow: 'hidden', maskImage: 'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)' }}>
+              <div style={{
+                display: 'flex',
+                gap: 0,
+                animation: 'marquee-scroll 22s linear infinite',
+                width: 'max-content',
+              }}>
+                {[...STACK, ...STACK].map((item, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '0 28px', flexShrink: 0 }}>
+                    <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'rgba(139,92,246,0.5)', flexShrink: 0 }} />
+                    <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 11, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)', whiteSpace: 'nowrap' }}>
+                      {item.name}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+          <style>{`@keyframes marquee-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }`}</style>
+        </section>
+
+        {/* ── CONTACT SECTION ────────────────────── */}
+        <section id="contact" className="relative py-24" style={{ pointerEvents: 'auto', background: '#06040f' }}>
+          <div className="max-w-350 mx-auto px-8 md:px-14">
+            <div className="max-w-lg mx-auto">
+
+              <div className="contact-heading mb-12 text-center">
+                <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 10, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'rgba(167,139,250,0.45)', marginBottom: 14 }}>
+                  Get In Touch
+                </p>
+                <h2 style={{ fontFamily: 'ClashDisplay, sans-serif', fontSize: 'clamp(38px, 4.5vw, 62px)', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.05, color: 'rgba(255,255,255,0.9)' }}>
+                  Let&apos;s build<br />something.
+                </h2>
+                <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, color: 'rgba(148,163,184,0.65)', marginTop: 16, lineHeight: 1.7 }}>
+                  Have a project in mind or just want to say hi? Drop me a message.
+                </p>
+              </div>
+
+              <form
+                className="contact-form"
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  const form = e.currentTarget
+                  const name = (form.elements.namedItem('name') as HTMLInputElement).value
+                  const email = (form.elements.namedItem('email') as HTMLInputElement).value
+                  const message = (form.elements.namedItem('message') as HTMLTextAreaElement).value
+                  window.location.href = `mailto:arnavrajcodes@gmail.com?subject=Hey Arnav, from ${name}&body=${encodeURIComponent(message)}%0A%0A— ${name} (${email})`
+                }}
+                style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
+              >
+                {(['name', 'email'] as const).map((field) => (
+                  <input
+                    key={field}
+                    name={field}
+                    type={field === 'email' ? 'email' : 'text'}
+                    placeholder={field === 'name' ? 'Your name' : 'your@email.com'}
+                    required
+                    style={{
+                      fontFamily: 'Satoshi, sans-serif',
+                      fontSize: 13,
+                      background: 'rgba(255,255,255,0.03)',
+                      border: '1px solid rgba(255,255,255,0.07)',
+                      borderRadius: 10,
+                      padding: '14px 18px',
+                      color: 'rgba(255,255,255,0.8)',
+                      outline: 'none',
+                      transition: 'border-color 0.25s',
+                      width: '100%',
+                    }}
+                    onFocus={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(139,92,246,0.45)' }}
+                    onBlur={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.07)' }}
+                  />
+                ))}
+                <textarea
+                  name="message"
+                  placeholder="What's on your mind?"
+                  required
+                  rows={5}
+                  style={{
+                    fontFamily: 'Satoshi, sans-serif',
+                    fontSize: 13,
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: 10,
+                    padding: '14px 18px',
+                    color: 'rgba(255,255,255,0.88)',
+                    outline: 'none',
+                    resize: 'none',
+                    transition: 'border-color 0.25s',
+                    width: '100%',
+                  }}
+                  onFocus={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(139,92,246,0.45)' }}
+                  onBlur={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.07)' }}
+                />
+                <button
+                  type="submit"
+                  style={{
+                    fontFamily: 'Satoshi, sans-serif',
+                    fontSize: 13,
+                    fontWeight: 500,
+                    letterSpacing: '0.04em',
+                    padding: '13px 32px',
+                    borderRadius: 999,
+                    background: 'linear-gradient(135deg, rgba(139,92,246,0.18) 0%, rgba(109,40,217,0.22) 100%)',
+                    border: '1px solid rgba(139,92,246,0.35)',
+                    color: 'rgba(196,181,253,0.9)',
+                    cursor: 'pointer',
+                    alignSelf: 'flex-start',
+                    transition: 'all 0.25s ease',
+                  }}
+                  onMouseEnter={e => {
+                    const el = e.currentTarget as HTMLElement
+                    el.style.background = 'linear-gradient(135deg, rgba(139,92,246,0.35) 0%, rgba(109,40,217,0.4) 100%)'
+                    el.style.borderColor = 'rgba(167,139,250,0.6)'
+                    el.style.color = '#fff'
+                  }}
+                  onMouseLeave={e => {
+                    const el = e.currentTarget as HTMLElement
+                    el.style.background = 'linear-gradient(135deg, rgba(139,92,246,0.18) 0%, rgba(109,40,217,0.22) 100%)'
+                    el.style.borderColor = 'rgba(139,92,246,0.35)'
+                    el.style.color = 'rgba(196,181,253,0.9)'
+                  }}
+                >
+                  Send message →
+                </button>
+              </form>
+
+              <div className="contact-form" style={{ marginTop: 32, paddingTop: 24, borderTop: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }}>
+                <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.05em' }}>
+                  Or reach me directly at{' '}
+                  <a href="mailto:arnavrajcodes@gmail.com" style={{ color: 'rgba(167,139,250,0.6)', transition: 'color 0.2s' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(196,181,253,1)' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(167,139,250,0.6)' }}>
+                    arnavrajcodes@gmail.com
+                  </a>
+                </p>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+                {/* ── FOOTER ─────────────────────────────── */}
+        <footer style={{ background: '#06040f', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+          {/* Top footer row */}
+          <div className="max-w-350 mx-auto px-8 md:px-14 py-12 flex items-end justify-between gap-8 flex-wrap">
+            <div>
+              <h3 style={{ fontFamily: 'ClashDisplay, sans-serif', fontSize: 'clamp(28px, 3.5vw, 48px)', fontWeight: 700, letterSpacing: '-0.03em', color: 'rgba(255,255,255,0.85)', lineHeight: 1.1, marginBottom: 8 }}>
+                Let&apos;s work<br />together.
+              </h3>
+              <a href="mailto:arnavrajcodes@gmail.com" style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 12, color: 'rgba(167,139,250,0.6)', letterSpacing: '0.05em', transition: 'color 0.2s' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(196,181,253,1)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(167,139,250,0.6)' }}>
+                arnavrajcodes@gmail.com ↗
+              </a>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 16 }}>
+              <div style={{ display: 'flex', gap: 20, alignItems: 'center', color: 'rgba(255,255,255,0.25)' }}>
+                {[
+                  { href: 'https://github.com/arnavraj-7', label: 'GitHub', icon: <GitHubIcon /> },
+                  { href: 'https://www.linkedin.com/in/arnav-raj-7142b8313/', label: 'LinkedIn', icon: <LinkedInIcon /> },
+                  { href: 'https://www.instagram.com/arnavraj.dev', label: 'Instagram', icon: <InstagramIcon /> },
+                ].map(({ href, label, icon }) => (
+                  <a key={label} href={href} target="_blank" rel="noopener noreferrer" aria-label={label}
+                    style={{ transition: 'color 0.25s' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.7)' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.25)' }}>
+                    {icon}
+                  </a>
+                ))}
+              </div>
+              <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.12)', letterSpacing: '0.08em' }}>
+                © 2025 Arnav Raj
+              </span>
+            </div>
+          </div>
+          {/* Bottom strip */}
+          <div className="max-w-350 mx-auto px-8 md:px-14 py-4" style={{ borderTop: '1px solid rgba(255,255,255,0.03)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.1)', letterSpacing: '0.06em' }}>
+              Full Stack Developer · CPO @ Dreamvator
+            </span>
+            <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.1)', letterSpacing: '0.06em' }}>
+              Built with Next.js &amp; Three.js
+            </span>
+          </div>
+        </footer>
       </main>
     </div>
   )
