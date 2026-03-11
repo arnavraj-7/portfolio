@@ -270,8 +270,8 @@ const PROJECTS = [
   {
     num: '01',
     name: 'Dreamvator',
-    type: 'Aviation EdTech Platform',
-    desc: 'A full-stack aviation education platform featuring insightful blogs, resources, and tools for the next generation of aviators.',
+    type: 'Stealth Startup',
+    desc: 'Something revolutionary is coming. Stay tuned.',
     stack: ['Next.js', 'Supabase'],
     url: 'https://www.dreamvator.com',
     year: '2024',
