@@ -318,7 +318,7 @@ const PROJECTS = [
 ───────────────────────────────────────────────────── */
 const AvatarCanvas = memo(function AvatarCanvas({ onReady }: { onReady: () => void }) {
   return (
-    <div className="avatar-canvas fixed inset-0 z-10 pointer-events-none">
+    <div className="avatar-canvas hidden md:block fixed inset-0 z-10 pointer-events-none">
       <Canvas
         gl={{ alpha: true, antialias: false, powerPreference: 'high-performance' }}
         camera={{ position: [0, 0.3, 4], fov: 44 }}
@@ -828,12 +828,12 @@ export default function PortfolioPage() {
         </section>
 
         {/* ── WORK SECTION ───────────────────────── */}
-        <section id="work" className="relative min-h-[160vh]">
-          <div className="max-w-350 mx-auto px-8 md:px-14 pt-[42vh] pb-28">
-            <div className="md:pl-[30%]">
+        <section id="work" className="relative min-h-screen md:min-h-[160vh]">
+          <div className="max-w-350 mx-auto px-8 md:px-14 pt-20 md:pt-[42vh] pb-16 md:pb-28">
+            <div className="md:pl-[30%] w-full">
 
               {/* Section header */}
-              <div className="work-heading" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 40 }}>
+              <div className="work-heading" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 40, flexWrap: 'wrap', gap: 12 }}>
                 <div>
                   <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 10, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'rgba(167,139,250,0.45)', marginBottom: 12 }}>
                     Selected Work
@@ -900,7 +900,7 @@ export default function PortfolioPage() {
 
                       {/* Description */}
                       {p.desc && (
-                        <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, lineHeight: 1.7, color: 'rgba(148,163,184,0.45)', maxWidth: 380, marginBottom: 16 }}>
+                        <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, lineHeight: 1.7, color: 'rgba(148,163,184,0.45)', maxWidth: 'min(380px, 100%)', marginBottom: 16 }}>
                           {p.desc}
                         </p>
                       )}
@@ -950,6 +950,7 @@ export default function PortfolioPage() {
           {/* ── Cursor-following hover preview ── */}
           <div
             ref={previewRef}
+            className="hidden md:block"
             style={{
               position: 'fixed', top: 0, left: 0, width: 264, height: 174,
               borderRadius: 14, overflow: 'hidden', pointerEvents: 'none', zIndex: 50,
@@ -992,8 +993,8 @@ export default function PortfolioPage() {
         <div style={{ height: '40vh' }} />
 
         {/* ── ABOUT SECTION ──────────────────────── */}
-        <section id="about" className="relative min-h-screen py-28">
-          <div className="max-w-350 mx-auto px-8 md:px-14 pt-[45vh]">
+        <section id="about" className="relative min-h-screen py-16 md:py-28">
+          <div className="max-w-350 mx-auto px-8 md:px-14 pt-10 md:pt-[45vh]">
             <div className="md:pr-[48%]">
 
               {/* Label */}
@@ -1116,7 +1117,7 @@ export default function PortfolioPage() {
           <div className="max-w-350 mx-auto px-8 md:px-14">
 
             {/* Split layout: left info | right form */}
-            <div className="contact-heading" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'start' }}>
+            <div className="contact-heading grid grid-cols-1 md:grid-cols-2 gap-14 md:gap-20 items-start">
 
               {/* LEFT — headline + contact info */}
               <div style={{ paddingTop: 8 }}>
@@ -1257,7 +1258,7 @@ export default function PortfolioPage() {
           <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '60%', height: 1, background: 'linear-gradient(to right, transparent, rgba(139,92,246,0.35), transparent)' }} />
 
           {/* Main footer body */}
-          <div className="max-w-350 mx-auto px-8 md:px-14" style={{ paddingTop: 80, paddingBottom: 40 }}>
+          <div className="max-w-350 mx-auto px-6 md:px-14" style={{ paddingTop: 56, paddingBottom: 32 }}>
 
             {/* Big CTA row */}
             <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 40, flexWrap: 'wrap', marginBottom: 64 }}>
