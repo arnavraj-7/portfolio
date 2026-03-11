@@ -3,7 +3,14 @@
     "allow": [
       "WebSearch",
       "mcp__ide__getDiagnostics",
-      "Bash(cd \"E:/portfolio\" && sed -i 's/max-w-\\\\[1400px\\\\]/max-w-350/g; s/max-w-\\\\[220px\\\\]/max-w-55/g' app/page.tsx)"
+      "Bash(cd \"E:/portfolio\" && sed -i 's/max-w-\\\\[1400px\\\\]/max-w-350/g; s/max-w-\\\\[220px\\\\]/max-w-55/g' app/page.tsx)",
+      "Bash(node \"E:/portfolio/replace_tech.mjs\")",
+      "Bash(node \"E:/portfolio/replace_footer.mjs\")",
+      "Bash(cd E:/portfolio && npm install @react-three/rapier @react-three/postprocessing --legacy-peer-deps 2>&1 | tail -5)",
+      "Bash(cd E:/portfolio && npx tsc --noEmit 2>&1 | head -40)",
+      "Bash(cd E:/portfolio && npx tsc --noEmit 2>&1 | head -20)",
+      "Bash(cd E:/portfolio && npx tsc --noEmit 2>&1 | head -10)",
+      "Bash(cd E:/portfolio && npx tsc --noEmit 2>&1 | head -15)"
     ]
   }
 }

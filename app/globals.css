@@ -70,6 +70,10 @@
   --bg: #06040f;
 }
 
+*, *::before, *::after {
+  cursor: none !important;
+}
+
 html, body {
   height: 100%;
   overscroll-behavior: none;
@@ -92,7 +96,6 @@ body {
 
 /* ─── GPU layer hints ───────────────────────────────── */
 .hero-item {
-  will-change: transform, opacity;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
@@ -105,22 +108,12 @@ body {
 /* ─── Animations ────────────────────────────────────── */
 @keyframes horizon-breath {
   0%, 100% {
-    opacity: 0.7;
+    opacity: 0.55;
     transform: translateX(-50%) scaleX(1) translateY(0px);
-    box-shadow:
-      0 -10px 50px rgba(139,92,246,0.55),
-      0 -26px 95px rgba(109,40,217,0.3),
-      0 -52px 155px rgba(109,40,217,0.12),
-      inset 0 26px 75px rgba(109,40,217,0.22);
   }
   50% {
-    opacity: 1;
-    transform: translateX(-50%) scaleX(1.04) translateY(-10px);
-    box-shadow:
-      0 -18px 80px rgba(167,139,250,0.85),
-      0 -40px 140px rgba(139,92,246,0.55),
-      0 -80px 220px rgba(109,40,217,0.25),
-      inset 0 36px 110px rgba(139,92,246,0.4);
+    opacity: 0.9;
+    transform: translateX(-50%) scaleX(1.04) translateY(-8px);
   }
 }
 
