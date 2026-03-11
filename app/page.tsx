@@ -283,6 +283,20 @@ const PROJECTS = [
   },
   {
     num: '02',
+    name: 'CrowdSpark',
+    type: 'Web3 / DeFi Protocol',
+    desc: 'A trustless crowdfunding protocol built on Ethereum. Custom Solidity escrow contract handles goal-based fund release, IPFS metadata storage via Pinata, and event-driven real-time updates — no middle-men.',
+    stack: ['Next.js', 'Solidity', 'Ethereum', 'IPFS', 'Pinata', 'TypeScript'],
+    url: 'https://crowd-spark-ten.vercel.app',
+    year: '2025',
+    preview: {
+      bg: 'linear-gradient(135deg, #020b14 0%, #0a1f3a 50%, #0d2b50 100%)',
+      domain: 'crowd-spark-ten.vercel.app',
+      accent: '#38bdf8',
+    },
+  },
+  {
+    num: '03',
     name: 'Odd Planet',
     type: 'Marketing Agency',
     desc: 'A striking marketing agency website crafted for brand identity and conversion.',
@@ -294,16 +308,6 @@ const PROJECTS = [
       domain: 'oddplanet.vercel.app',
       accent: '#60a5fa',
     },
-  },
-  {
-    num: '03',
-    name: 'Untitled',
-    type: 'Coming Soon',
-    desc: null,
-    stack: [] as string[],
-    url: null,
-    year: '2025',
-    preview: null,
   },
 ]
 
