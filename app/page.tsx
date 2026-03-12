@@ -62,6 +62,7 @@ function AvatarScene({ onReady }: { onReady: () => void }) {
   const mousePos = useRef({ x: 0, y: 0 })
   // 0 = hero (cursor tracking), 1 = work section (fixed look right)
   const scrollWeight = useRef(0)
+  const aiProgressRef = useRef(0)
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
@@ -170,19 +171,30 @@ function AvatarScene({ onReady }: { onReady: () => void }) {
       onLeaveBack: () => ajModelRef.current?.playAnimation('BreathingIdle'),
     })
 
-    // AI Chat section — avatar scales down and moves left to sit beside the chat window
-    const aiTimeline = gsap.timeline({
-      scrollTrigger: {
-        trigger: '#ai',
-        start: 'top 75%',
-        end: 'top 15%',
-        scrub: 1.5,
+    // AI Chat section — avatar shrinks and enters the AJ profile circle dynamically
+    const aiST = ScrollTrigger.create({
+      trigger: '#ai',
+      start: 'top 80%',
+      end: 'top 5%',
+      onUpdate: (self) => {
+        if (!groupRef.current) return
+        aiProgressRef.current = self.progress
+
+        // Fade AJ text out as avatar enters
+        const ajText = document.getElementById('aj-text')
+        if (ajText) {
+          ajText.style.opacity = String(Math.max(0, 1 - self.progress * 2.5))
+          ajText.style.transition = 'none'
+        }
+      },
+      onLeave: () => { aiProgressRef.current = 1 },
+      onLeaveBack: () => {
+        aiProgressRef.current = 0
+        const ajText = document.getElementById('aj-text')
+        if (ajText) ajText.style.opacity = '1'
+        ajModelRef.current?.playAnimation('BreathingIdle')
       },
     })
-    aiTimeline
-      .to(groupRef.current.position, { x: -2.3, y: 0.1, ease: 'power2.inOut', duration: 1 })
-      .to(groupRef.current.scale,    { x: 0.38, y: 0.38, z: 0.38, ease: 'power2.inOut', duration: 1 }, '<')
-      .to(groupRef.current.rotation, { y: 0.4, ease: 'power2.inOut', duration: 1 }, '<')
 
     const aiAnimTrigger = ScrollTrigger.create({
       trigger: '#ai',
@@ -200,7 +212,7 @@ function AvatarScene({ onReady }: { onReady: () => void }) {
       headWeightOut.kill()
       animTrigger.kill()
       aboutAnimTrigger.kill()
-      aiTimeline.kill()
+      aiST.kill()
       aiAnimTrigger.kill()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -214,6 +226,35 @@ function AvatarScene({ onReady }: { onReady: () => void }) {
       headBoneRef.current = modelRef.current.getObjectByName('mixamorigHead') ?? null
     }
 
+    // ── AI section: shrink avatar into the AJ profile circle ──────────────
+    const aiP = aiProgressRef.current
+    if (aiP > 0 && groupRef.current) {
+      const el = typeof document !== 'undefined' ? document.getElementById('aj-avatar-target') : null
+      let tx = 0, ty = 0
+      if (el) {
+        const rect = el.getBoundingClientRect()
+        const cx = rect.left + rect.width / 2
+        const cy = rect.top + rect.height / 2
+        const aspect = window.innerWidth / window.innerHeight
+        const viewH = 2 * Math.tan((44 * Math.PI) / 360) * 4
+        const viewW = viewH * aspect
+        const ndcX = (cx / window.innerWidth) * 2 - 1
+        const ndcY = -((cy / window.innerHeight) * 2 - 1)
+        tx = ndcX * viewW / 2
+        ty = ndcY * viewH / 2 + 0.3
+      }
+      // Ease progress: smooth cubic ease-in-out
+      const ep = aiP < 0.5 ? 4 * aiP * aiP * aiP : 1 - Math.pow(-2 * aiP + 2, 3) / 2
+      groupRef.current.position.x = THREE.MathUtils.lerp(groupRef.current.position.x, THREE.MathUtils.lerp(1.6, tx, ep), 0.12)
+      groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, THREE.MathUtils.lerp(-0.4, ty, ep), 0.12)
+      const targetScale = THREE.MathUtils.lerp(1, 0.04, ep)
+      groupRef.current.scale.x = THREE.MathUtils.lerp(groupRef.current.scale.x, targetScale, 0.12)
+      groupRef.current.scale.y = groupRef.current.scale.x
+      groupRef.current.scale.z = groupRef.current.scale.x
+      groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, THREE.MathUtils.lerp(-0.5, 0, ep), 0.12)
+    }
+
+    // ── Head tracking (cursor follow / blend with scroll weight) ──────────
     const head = headBoneRef.current
     const mx = mousePos.current.x
     const my = mousePos.current.y
@@ -301,7 +342,7 @@ const PROJECTS = [
     desc: 'Something revolutionary is coming. Stay tuned.',
     stack: ['Launching soon'],
     url: 'https://www.dreamvator.com',
-    year: '2024',
+    year: '2026',
     screenshot: '/previews/dreamvator.png',
     preview: {
       bg: 'linear-gradient(135deg, #0f0020 0%, #2d1260 55%, #1a0a40 100%)',
@@ -331,7 +372,7 @@ const PROJECTS = [
     desc: 'A striking marketing agency website crafted for brand identity and conversion.',
     stack: ['Next.js', 'Vercel'],
     url: 'https://oddplanet.vercel.app/',
-    year: '2024',
+    year: '2026',
     screenshot: '/previews/oddplanet.png',
     preview: {
       bg: 'linear-gradient(135deg, #050510 0%, #0d1b2a 50%, #162032 100%)',
@@ -359,7 +400,7 @@ const TECH_ITEMS = [
 ───────────────────────────────────────────────────── */
 const AvatarCanvas = memo(function AvatarCanvas({ onReady }: { onReady: () => void }) {
   return (
-    <div className="avatar-canvas hidden md:block fixed inset-0 z-10 pointer-events-none">
+    <div className="avatar-canvas hidden md:block fixed inset-0 z-40 pointer-events-none">
       <Canvas
         gl={{ alpha: true, antialias: false, powerPreference: 'high-performance' }}
         camera={{ position: [0, 0.3, 4], fov: 44 }}

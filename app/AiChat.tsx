@@ -6,7 +6,7 @@ import { useState, useRef, useEffect, memo } from 'react'
    GEMINI CONFIG
 ───────────────────────────────────────────────────── */
 const GEMINI_KEY = 'AIzaSyAwSbHhntrlD39L-qzmirgfswZxzdKcAyM'
-const GEMINI_MODEL = 'gemini-1.5-flash'
+const GEMINI_MODEL = 'gemini-1.5-flash-latest'
 
 const SYSTEM_PROMPT = `You are AJ — the personal AI of Arnav Raj, speaking in first person as Arnav.
 You ONLY answer questions about Arnav Raj. For any unrelated topic, respond:
@@ -34,9 +34,9 @@ SKILLS & STACK:
 - Other: Product strategy, UI/UX design, CPO-level thinking
 
 PROJECTS:
-1. Dreamvator (2024) — Stealth startup, something big coming. → dreamvator.com
+1. Dreamvator (2026) — Stealth startup, something big coming. → dreamvator.com
 2. CrowdSpark (2025) — Trustless Web3 crowdfunding on Ethereum. Solidity escrow, IPFS/Pinata storage, no middlemen. → crowd-spark-ten.vercel.app
-3. Odd Planet (2024) — Marketing agency website. → oddplanet.vercel.app
+3. Odd Planet (2026) — Marketing agency website. → oddplanet.vercel.app
 
 WHAT I DO:
 - Full-stack web & app development
@@ -141,6 +141,7 @@ export const AiChat = memo(function AiChat() {
       )
 
       const json = await res.json()
+      if (json.error) throw new Error(json.error.message ?? 'API error')
       const reply =
         json.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ??
         "I'm having a moment — try again shortly!"
@@ -189,15 +190,26 @@ export const AiChat = memo(function AiChat() {
         background: 'rgba(139,92,246,0.03)',
         display: 'flex', alignItems: 'center', gap: 11, flexShrink: 0,
       }}>
-        {/* Avatar badge */}
-        <div style={{
-          width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-          background: 'linear-gradient(135deg, rgba(109,40,217,0.6) 0%, rgba(139,92,246,0.4) 100%)',
-          border: '1px solid rgba(139,92,246,0.5)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 0 16px rgba(139,92,246,0.25)',
-        }}>
-          <span style={{ fontFamily: 'ClashDisplay, sans-serif', fontSize: 13, fontWeight: 700, color: '#e9d5ff', letterSpacing: '-0.01em' }}>
+        {/* Avatar badge — 3D avatar enters this circle on scroll */}
+        <div
+          id="aj-avatar-target"
+          style={{
+            width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+            background: 'linear-gradient(135deg, rgba(109,40,217,0.6) 0%, rgba(139,92,246,0.4) 100%)',
+            border: '1px solid rgba(139,92,246,0.5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 0 16px rgba(139,92,246,0.25)',
+            position: 'relative', overflow: 'visible',
+          }}
+        >
+          <span
+            id="aj-text"
+            style={{
+              fontFamily: 'ClashDisplay, sans-serif', fontSize: 13,
+              fontWeight: 700, color: '#e9d5ff', letterSpacing: '-0.01em',
+              transition: 'opacity 0.2s',
+            }}
+          >
             AJ
           </span>
         </div>
