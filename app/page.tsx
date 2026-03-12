@@ -391,7 +391,7 @@ export default function PortfolioPage() {
       gsap.to('.avatar-canvas', {
         opacity: 0,
         ease: 'power2.in',
-        scrollTrigger: { trigger: '#ai', start: 'top 75%', end: 'top 20%', scrub: 1 },
+        scrollTrigger: { trigger: '#ai', start: 'top 100%', end: 'top 35%', scrub: 1 },
       })
     })
     return () => ctx.revert()
@@ -513,66 +513,66 @@ export default function PortfolioPage() {
         scrollTrigger: { trigger: '#hero', start: 'top top', end: '35% top', scrub: 1 },
       })
 
+      const rv = 'play none none reverse' // reverse on scroll-up for all reveals
+
       // Work section entrance
       gsap.fromTo('.work-heading',
         { x: 24, opacity: 0 },
-        { x: 0, opacity: 1, duration: 0.7, ease: 'power2.out', scrollTrigger: { trigger: '.work-heading', start: 'top 88%' } }
+        { x: 0, opacity: 1, duration: 0.7, ease: 'power2.out', scrollTrigger: { trigger: '.work-heading', start: 'top 88%', toggleActions: rv } }
       )
       gsap.fromTo('.work-card',
         { x: 32, opacity: 0 },
-        { x: 0, opacity: 1, duration: 0.6, stagger: 0.12, ease: 'power2.out', scrollTrigger: { trigger: '.work-card', start: 'top 88%' } }
+        { x: 0, opacity: 1, duration: 0.6, stagger: 0.12, ease: 'power2.out', scrollTrigger: { trigger: '.work-card', start: 'top 88%', toggleActions: rv } }
       )
 
       // About — headings slide in from left, items stagger up with clear rhythm
       gsap.fromTo('.about-heading',
         { x: -28, opacity: 0 },
-        { x: 0, opacity: 1, duration: 0.75, ease: 'power3.out', stagger: 0.12, scrollTrigger: { trigger: '#about', start: 'top 80%' } }
+        { x: 0, opacity: 1, duration: 0.75, ease: 'power3.out', stagger: 0.12, scrollTrigger: { trigger: '#about', start: 'top 80%', toggleActions: rv } }
       )
       gsap.fromTo('.about-item',
         { y: 28, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.65, stagger: 0.14, ease: 'power2.out', scrollTrigger: { trigger: '#about', start: 'top 65%' } }
+        { y: 0, opacity: 1, duration: 0.65, stagger: 0.14, ease: 'power2.out', scrollTrigger: { trigger: '#about', start: 'top 65%', toggleActions: rv } }
       )
 
       // AI chat section
       gsap.fromTo('.ai-heading',
         { y: 20, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.7, ease: 'power2.out', scrollTrigger: { trigger: '.ai-heading', start: 'top 88%' } }
+        { y: 0, opacity: 1, duration: 0.7, ease: 'power2.out', scrollTrigger: { trigger: '.ai-heading', start: 'top 88%', toggleActions: rv } }
       )
       gsap.fromTo('.ai-body',
         { y: 24, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.7, ease: 'power2.out', scrollTrigger: { trigger: '.ai-body', start: 'top 88%' } }
+        { y: 0, opacity: 1, duration: 0.7, ease: 'power2.out', scrollTrigger: { trigger: '.ai-body', start: 'top 88%', toggleActions: rv } }
       )
 
       // Tech stack heading
       gsap.fromTo('.tech-heading',
         { y: 20, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.7, ease: 'power2.out', scrollTrigger: { trigger: '.tech-heading', start: 'top 88%' } }
+        { y: 0, opacity: 1, duration: 0.7, ease: 'power2.out', scrollTrigger: { trigger: '.tech-heading', start: 'top 88%', toggleActions: rv } }
       )
-
 
       // Contact — left col slides from left, form card slides from right
       gsap.fromTo('.contact-left',
         { x: -32, opacity: 0 },
-        { x: 0, opacity: 1, duration: 0.75, ease: 'power3.out', scrollTrigger: { trigger: '#contact', start: 'top 82%' } }
+        { x: 0, opacity: 1, duration: 0.75, ease: 'power3.out', scrollTrigger: { trigger: '#contact', start: 'top 82%', toggleActions: rv } }
       )
       gsap.fromTo('.contact-card',
         { x: 32, opacity: 0 },
-        { x: 0, opacity: 1, duration: 0.75, ease: 'power3.out', scrollTrigger: { trigger: '#contact', start: 'top 82%' } }
+        { x: 0, opacity: 1, duration: 0.75, ease: 'power3.out', scrollTrigger: { trigger: '#contact', start: 'top 82%', toggleActions: rv } }
       )
-      // Form fields stagger up after the card is visible
       gsap.fromTo('.contact-field',
         { y: 20, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.55, stagger: 0.1, ease: 'power2.out', scrollTrigger: { trigger: '#contact', start: 'top 68%' } }
+        { y: 0, opacity: 1, duration: 0.55, stagger: 0.1, ease: 'power2.out', scrollTrigger: { trigger: '#contact', start: 'top 68%', toggleActions: rv } }
       )
 
-      // Footer — big heading slides up, links fade in, meta fades last
+      // Footer
       gsap.fromTo('.footer-cta',
         { y: 36, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.85, ease: 'power3.out', scrollTrigger: { trigger: 'footer', start: 'top 88%' } }
+        { y: 0, opacity: 1, duration: 0.85, ease: 'power3.out', scrollTrigger: { trigger: 'footer', start: 'top 88%', toggleActions: rv } }
       )
       gsap.fromTo('.footer-meta',
         { opacity: 0 },
-        { opacity: 1, duration: 0.6, ease: 'power2.out', scrollTrigger: { trigger: 'footer', start: 'top 55%' } }
+        { opacity: 1, duration: 0.6, ease: 'power2.out', scrollTrigger: { trigger: 'footer', start: 'top 55%', toggleActions: rv } }
       )
 
       // Recalculate all scroll trigger positions after a tick —
@@ -1098,7 +1098,7 @@ export default function PortfolioPage() {
         <div className="h-6 md:h-[40vh]" />
 
         {/* ── ABOUT SECTION ──────────────────────── */}
-        <section id="about" className="relative min-h-screen py-16 md:py-28">
+        <section id="about" className="relative min-h-screen py-16 md:py-28" style={{ position: 'sticky', top: 0, zIndex: 10 }}>
           <div className="max-w-350 mx-auto px-8 md:px-14 pt-10 md:pt-[45vh]">
             <div className="md:pr-[48%]">
 
@@ -1195,7 +1195,7 @@ export default function PortfolioPage() {
         </section>
 
         {/* ── AI CHAT SECTION ────────────────────── */}
-        <section id="ai" className="relative min-h-screen" style={{ background: '#06040f' }}>
+        <section id="ai" className="relative min-h-screen" style={{ background: '#06040f', position: 'sticky', top: 0, zIndex: 20, boxShadow: '0 -40px 80px rgba(0,0,0,0.9)' }}>
           <div className="max-w-350 mx-auto px-8 md:px-14 py-28 md:pt-[18vh]">
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
 
@@ -1212,7 +1212,7 @@ export default function PortfolioPage() {
 
               {/* Sub */}
               <p className="ai-heading" style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, color: 'rgba(148,163,184,0.45)', lineHeight: 1.7, marginBottom: 40, maxWidth: 380 }}>
-                Powered by Gemini 2.0 — ask about my projects, stack, or how to work together.
+                Powered by Gemini 2.5 — ask about my projects, stack, or how to work together.
               </p>
 
               {/* Chat widget */}
@@ -1225,7 +1225,10 @@ export default function PortfolioPage() {
         </section>
 
         {/* ── TECH STACK SECTION ─────────────────── */}
-        <section id="tech" className="relative" style={{ background: '#06040f' }}>
+        <section id="tech" className="relative" style={{ background: '#06040f', overflow: 'hidden', position: 'sticky', top: 0, zIndex: 30, boxShadow: '0 -40px 80px rgba(0,0,0,0.9)' }}>
+          {/* Parallax ambient orbs */}
+          <div className="parallax-far absolute pointer-events-none" style={{ top: '10%', left: '-8vw', width: '40vw', height: '40vw', background: 'radial-gradient(ellipse 60% 55% at 20% 40%, rgba(109,40,217,0.13) 0%, transparent 70%)', borderRadius: '50%' }} />
+          <div className="parallax-near absolute pointer-events-none" style={{ top: '30%', right: '-6vw', width: '30vw', height: '30vw', background: 'radial-gradient(ellipse 55% 50% at 80% 60%, rgba(139,92,246,0.09) 0%, transparent 70%)', borderRadius: '50%' }} />
           {/* Heading */}
           <div className="max-w-350 mx-auto px-8 md:px-14 pt-24 pb-6">
             <div className="tech-heading">
@@ -1275,7 +1278,10 @@ export default function PortfolioPage() {
         </section>
 
         {/* ── CONTACT SECTION ────────────────────── */}
-        <section id="contact" className="relative py-24" style={{ pointerEvents: 'auto', background: '#06040f' }}>
+        <section id="contact" className="relative py-24" style={{ pointerEvents: 'auto', background: '#06040f', overflow: 'hidden' }}>
+          {/* Parallax ambient orbs */}
+          <div className="parallax-near absolute pointer-events-none" style={{ top: '0%', left: '50%', transform: 'translateX(-50%)', width: '60vw', height: '40vw', background: 'radial-gradient(ellipse 70% 60% at 50% 0%, rgba(109,40,217,0.15) 0%, transparent 65%)', borderRadius: '50%' }} />
+          <div className="parallax-far absolute pointer-events-none" style={{ bottom: '10%', right: '-5vw', width: '25vw', height: '25vw', background: 'radial-gradient(ellipse 60% 55% at 80% 80%, rgba(139,92,246,0.1) 0%, transparent 70%)', borderRadius: '50%' }} />
           <div className="max-w-350 mx-auto px-8 md:px-14">
 
             {/* Split layout: left info | right form */}
@@ -1419,6 +1425,8 @@ export default function PortfolioPage() {
 
                 {/* ── FOOTER ─────────────────────────────── */}
         <footer style={{ background: '#06040f', position: 'relative', overflow: 'hidden' }}>
+          {/* Parallax ambient orb */}
+          <div className="parallax-far absolute pointer-events-none" style={{ bottom: '20%', left: '10%', width: '35vw', height: '35vw', background: 'radial-gradient(ellipse 65% 55% at 30% 70%, rgba(109,40,217,0.12) 0%, transparent 70%)', borderRadius: '50%' }} />
           {/* Subtle top glow */}
           <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '60%', height: 1, background: 'linear-gradient(to right, transparent, rgba(139,92,246,0.35), transparent)' }} />
 

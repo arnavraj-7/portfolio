@@ -28,7 +28,7 @@ SKILLS & STACK:
 - Frontend: Next.js, React, TypeScript, JavaScript, React Native, Three.js, GSAP, Tailwind CSS
 - Backend: Node.js, Express, Supabase, MySQL
 - Web3: Solidity, Ethereum, IPFS, Pinata
-- AI: Gemini API, AI-powered product features
+- AI: AI-powered product features
 - Other: Product strategy, UI/UX design, CPO-level thinking
 
 PROJECTS:
@@ -218,37 +218,7 @@ export const AiChat = memo(function AiChat() {
         background: 'linear-gradient(to right, transparent, rgba(139,92,246,0.7), rgba(196,181,253,0.5), transparent)',
         pointerEvents: 'none', zIndex: 10,
       }} />
-      {/* Corner accents */}
-      {[
-        { top: 8, left: 8, borderTop: '1.5px solid rgba(139,92,246,0.4)', borderLeft: '1.5px solid rgba(139,92,246,0.4)' },
-        { top: 8, right: 8, borderTop: '1.5px solid rgba(139,92,246,0.4)', borderRight: '1.5px solid rgba(139,92,246,0.4)' },
-        { bottom: 8, left: 8, borderBottom: '1.5px solid rgba(139,92,246,0.4)', borderLeft: '1.5px solid rgba(139,92,246,0.4)' },
-        { bottom: 8, right: 8, borderBottom: '1.5px solid rgba(139,92,246,0.4)', borderRight: '1.5px solid rgba(139,92,246,0.4)' },
-      ].map((style, i) => (
-        <div key={i} style={{ position: 'absolute', width: 10, height: 10, pointerEvents: 'none', zIndex: 10, ...style }} />
-      ))}
 
-      {/* ── STATUS BAR — slim, no avatar circle ── */}
-      <div style={{
-        padding: '10px 20px',
-        borderBottom: '1px solid rgba(139,92,246,0.08)',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        flexShrink: 0, position: 'relative', zIndex: 2,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          <span style={{
-            width: 6, height: 6, borderRadius: '50%', background: '#4ade80',
-            boxShadow: '0 0 8px rgba(74,222,128,0.9)', flexShrink: 0,
-            animation: 'badge-pulse 2.5s ease-in-out infinite',
-          }} />
-          <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-            AJ · online
-          </span>
-        </div>
-        <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 10, color: 'rgba(139,92,246,0.4)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-          Gemini 2.5
-        </span>
-      </div>
 
       {/* ── MESSAGES ─────────────────────────── */}
       <div
