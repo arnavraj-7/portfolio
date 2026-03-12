@@ -10,7 +10,8 @@
       "Bash(cd E:/portfolio && npx tsc --noEmit 2>&1 | head -40)",
       "Bash(cd E:/portfolio && npx tsc --noEmit 2>&1 | head -20)",
       "Bash(cd E:/portfolio && npx tsc --noEmit 2>&1 | head -10)",
-      "Bash(cd E:/portfolio && npx tsc --noEmit 2>&1 | head -15)"
+      "Bash(cd E:/portfolio && npx tsc --noEmit 2>&1 | head -15)",
+      "Bash(curl -s -X POST \"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyAwSbHhntrlD39L-qzmirgfswZxzdKcAyM\" -H \"Content-Type: application/json\" -d \"{\\\\\"contents\\\\\":[{\\\\\"role\\\\\":\\\\\"user\\\\\",\\\\\"parts\\\\\":[{\\\\\"text\\\\\":\\\\\"Hi\\\\\"}]}]}\" 2>&1 | head -40)"
     ]
   }
 }

@@ -63,6 +63,11 @@ function AvatarScene({ onReady }: { onReady: () => void }) {
   // 0 = hero (cursor tracking), 1 = work section (fixed look right)
   const scrollWeight = useRef(0)
   const aiProgressRef = useRef(0)
+  // Live circle world-space target — updated every frame from getBoundingClientRect
+  const aiTargetRef = useRef({ x: 0, y: 0 })
+  // ↓ Tweak this single value to adjust avatar vertical position inside circle
+  // More negative = avatar moves DOWN on screen. Start: -0.11, range: -0.05 to -0.25
+  const AI_Y_OFFSET = -0.11
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
@@ -171,38 +176,34 @@ function AvatarScene({ onReady }: { onReady: () => void }) {
       onLeaveBack: () => ajModelRef.current?.playAnimation('BreathingIdle'),
     })
 
-    // AI Chat section — avatar shrinks and enters the AJ profile circle dynamically
+    // AI Chat section — scrub drives aiProgressRef smoothly forward AND backward
+    // scrub: 1.4 gives a ~1.4s lag so animation feels weighty and "locks in"
     const aiST = ScrollTrigger.create({
       trigger: '#ai',
       start: 'top 80%',
-      end: 'top 5%',
+      end: 'center 35%',
+      scrub: 1.4,
+      onEnter: () => posTimeline.kill(), // stop posTimeline fighting useFrame
       onUpdate: (self) => {
-        if (!groupRef.current) return
         aiProgressRef.current = self.progress
-
-        // Fade AJ text out as avatar enters
+        // Fade AJ text out as avatar enters circle
         const ajText = document.getElementById('aj-text')
         if (ajText) {
-          ajText.style.opacity = String(Math.max(0, 1 - self.progress * 2.5))
+          ajText.style.opacity = String(Math.max(0, 1 - self.progress * 3))
           ajText.style.transition = 'none'
         }
       },
-      onLeave: () => { aiProgressRef.current = 1 },
       onLeaveBack: () => {
-        aiProgressRef.current = 0
         const ajText = document.getElementById('aj-text')
         if (ajText) ajText.style.opacity = '1'
-        ajModelRef.current?.playAnimation('BreathingIdle')
+        const wrapper = document.getElementById('avatar-canvas-wrapper')
+        if (wrapper) wrapper.style.clipPath = 'none'
       },
     })
 
     const aiAnimTrigger = ScrollTrigger.create({
       trigger: '#ai',
       start: 'top 55%',
-      onEnter: () => {
-        ajModelRef.current?.playAnimation('WavingGesture')
-        setTimeout(() => ajModelRef.current?.playAnimation('BreathingIdle'), 2600)
-      },
       onLeaveBack: () => ajModelRef.current?.playAnimation('BreathingIdle'),
     })
 
@@ -226,32 +227,41 @@ function AvatarScene({ onReady }: { onReady: () => void }) {
       headBoneRef.current = modelRef.current.getObjectByName('mixamorigHead') ?? null
     }
 
-    // ── AI section: shrink avatar into the AJ profile circle ──────────────
+    // ── AI section: clip canvas to circle + shrink avatar ────────────────────
     const aiP = aiProgressRef.current
-    if (aiP > 0 && groupRef.current) {
-      const el = typeof document !== 'undefined' ? document.getElementById('aj-avatar-target') : null
-      let tx = 0, ty = 0
-      if (el) {
-        const rect = el.getBoundingClientRect()
-        const cx = rect.left + rect.width / 2
-        const cy = rect.top + rect.height / 2
-        const aspect = window.innerWidth / window.innerHeight
-        const viewH = 2 * Math.tan((44 * Math.PI) / 360) * 4
-        const viewW = viewH * aspect
-        const ndcX = (cx / window.innerWidth) * 2 - 1
-        const ndcY = -((cy / window.innerHeight) * 2 - 1)
-        tx = ndcX * viewW / 2
-        ty = ndcY * viewH / 2 + 0.3
-      }
-      // Ease progress: smooth cubic ease-in-out
+    const wrapper = typeof document !== 'undefined'
+      ? document.getElementById('avatar-canvas-wrapper') : null
+    const circleEl = typeof document !== 'undefined'
+      ? document.getElementById('aj-avatar-target') : null
+
+    if (aiP > 0 && groupRef.current && wrapper && circleEl) {
+      const rect = circleEl.getBoundingClientRect()
+      const cx = rect.left + rect.width / 2
+      const cy = rect.top + rect.height / 2
+      const circleR = rect.width / 2
+
+      // ep: cubic ease-in-out on scroll progress
       const ep = aiP < 0.5 ? 4 * aiP * aiP * aiP : 1 - Math.pow(-2 * aiP + 2, 3) / 2
-      groupRef.current.position.x = THREE.MathUtils.lerp(groupRef.current.position.x, THREE.MathUtils.lerp(1.6, tx, ep), 0.12)
-      groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, THREE.MathUtils.lerp(-0.4, ty, ep), 0.12)
-      const targetScale = THREE.MathUtils.lerp(1, 0.04, ep)
-      groupRef.current.scale.x = THREE.MathUtils.lerp(groupRef.current.scale.x, targetScale, 0.12)
-      groupRef.current.scale.y = groupRef.current.scale.x
-      groupRef.current.scale.z = groupRef.current.scale.x
-      groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, THREE.MathUtils.lerp(-0.5, 0, ep), 0.12)
+
+      // Clip canvas: radius shrinks from full-screen diagonal → circle radius
+      // This GUARANTEES avatar is inside the circle at ep=1
+      const maxR = Math.sqrt(window.innerWidth ** 2 + window.innerHeight ** 2)
+      const clipR = THREE.MathUtils.lerp(maxR, circleR, ep)
+      wrapper.style.clipPath = `circle(${clipR}px at ${cx}px ${cy}px)`
+
+      // Also move avatar toward circle center in 3D (best-effort — clip handles precision)
+      const aspect = window.innerWidth / window.innerHeight
+      const viewH = 2 * Math.tan((44 * Math.PI) / 360) * 4
+      const tx = ((cx / window.innerWidth) * 2 - 1) * viewH * aspect / 2
+      const ty = -((cy / window.innerHeight) * 2 - 1) * viewH / 2 + 0.3 + AI_Y_OFFSET
+      groupRef.current.position.x = THREE.MathUtils.lerp(1.6, tx, ep)
+      groupRef.current.position.y = THREE.MathUtils.lerp(-0.4, ty, ep)
+      groupRef.current.scale.setScalar(THREE.MathUtils.lerp(1, 0.055, ep))
+      groupRef.current.rotation.y = THREE.MathUtils.lerp(-0.5, 0, ep)
+
+    } else if (wrapper) {
+      // Restore full canvas when not in AI section
+      wrapper.style.clipPath = 'none'
     }
 
     // ── Head tracking (cursor follow / blend with scroll weight) ──────────
@@ -388,7 +398,7 @@ const TECH_ITEMS = [
   { icon: 'devicon-nextjs-plain',                   name: 'Next.js' },
   { icon: 'devicon-nodejs-plain colored',           name: 'Node.js' },
   { icon: 'devicon-express-original',               name: 'Express' },
-  { icon: 'devicon-reactnative-plain colored',      name: 'React Native' },
+  { icon: '',  img: '/react-native.png',            name: 'React Native' },
   { icon: 'devicon-mysql-plain colored',            name: 'MySQL' },
   { icon: 'devicon-typescript-plain colored',       name: 'TypeScript' },
   { icon: 'devicon-javascript-plain colored',       name: 'JavaScript' },
@@ -400,8 +410,9 @@ const TECH_ITEMS = [
 ───────────────────────────────────────────────────── */
 const AvatarCanvas = memo(function AvatarCanvas({ onReady }: { onReady: () => void }) {
   return (
-    <div className="avatar-canvas hidden md:block fixed inset-0 z-40 pointer-events-none">
+    <div id="avatar-canvas-wrapper" className="avatar-canvas hidden md:block fixed inset-0 z-40 pointer-events-none">
       <Canvas
+        style={{ pointerEvents: 'none' }}
         gl={{ alpha: true, antialias: false, powerPreference: 'high-performance' }}
         camera={{ position: [0, 0.3, 4], fov: 44 }}
         dpr={1}
@@ -1217,10 +1228,8 @@ export default function PortfolioPage() {
 
         {/* ── AI CHAT SECTION ────────────────────── */}
         <section id="ai" className="relative min-h-screen" style={{ background: '#06040f' }}>
-          <div className="max-w-350 mx-auto px-8 md:px-14 py-28 md:pt-[38vh]">
-
-            {/* Content pushed right — avatar occupies left ~40% */}
-            <div className="md:pl-[44%]">
+          <div className="max-w-350 mx-auto px-8 md:px-14 py-28 md:pt-[18vh]">
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
 
               {/* Label */}
               <p className="ai-heading" style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 10, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'rgba(167,139,250,0.45)', marginBottom: 16 }}>
@@ -1234,12 +1243,12 @@ export default function PortfolioPage() {
               </h2>
 
               {/* Sub */}
-              <p className="ai-heading" style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, color: 'rgba(148,163,184,0.45)', lineHeight: 1.7, marginBottom: 32, maxWidth: 340 }}>
-                Powered by Gemini — ask about my projects, stack, or how to work together.
+              <p className="ai-heading" style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, color: 'rgba(148,163,184,0.45)', lineHeight: 1.7, marginBottom: 40, maxWidth: 380 }}>
+                Powered by Gemini 2.0 — ask about my projects, stack, or how to work together.
               </p>
 
               {/* Chat widget */}
-              <div className="ai-body" style={{ pointerEvents: 'auto' }}>
+              <div className="ai-body" style={{ pointerEvents: 'auto', width: '100%', display: 'flex', justifyContent: 'center', textAlign: 'left' }}>
                 <AiChat />
               </div>
 
@@ -1270,7 +1279,7 @@ export default function PortfolioPage() {
           {/* Mobile: icon grid */}
           <div className="md:hidden px-8 pt-2 pb-16">
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
-              {TECH_ITEMS.map(({ icon, name }) => (
+              {TECH_ITEMS.map(({ icon, img, name } as any) => (
                 <div key={name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
                   <div style={{
                     width: 60, height: 60, borderRadius: 16,
@@ -1278,7 +1287,10 @@ export default function PortfolioPage() {
                     border: '1px solid rgba(139,92,246,0.12)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
-                    <i className={icon} style={{ fontSize: 32 }} />
+                    {img
+                      ? <img src={img} alt={name} style={{ width: 32, height: 32, objectFit: 'contain' }} />
+                      : <i className={icon} style={{ fontSize: 32 }} />
+                    }
                   </div>
                   <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.32)', letterSpacing: '0.05em', textAlign: 'center' }}>
                     {name}

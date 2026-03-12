@@ -176,6 +176,32 @@ body {
 }
 .ai-msg { animation: msg-in 0.22s ease-out both; }
 
+/* ─── AI chat container breathe glow ───────────────── */
+@keyframes ai-breathe {
+  0%, 100% {
+    box-shadow: 0 0 0 1px rgba(139,92,246,0.08), 0 40px 120px rgba(0,0,0,0.7),
+                0 0 60px rgba(109,40,217,0.08), inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+  50% {
+    box-shadow: 0 0 0 1px rgba(139,92,246,0.14), 0 40px 120px rgba(0,0,0,0.7),
+                0 0 100px rgba(109,40,217,0.18), inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+}
+
+/* ─── AI scanning line ──────────────────────────────── */
+@keyframes ai-scan {
+  0%   { top: 0%; opacity: 0; }
+  5%   { opacity: 1; }
+  90%  { opacity: 0.6; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* ─── AJ circle ring pulse ──────────────────────────── */
+@keyframes aj-ring-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(139,92,246,0.08), 0 0 24px rgba(139,92,246,0.35); }
+  50%       { box-shadow: 0 0 0 6px rgba(139,92,246,0.04), 0 0 36px rgba(139,92,246,0.5); }
+}
+
 /* hide scrollbar inside chat */
 .ai-scroll::-webkit-scrollbar { display: none; }
 .ai-scroll { scrollbar-width: none; }
