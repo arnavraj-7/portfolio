@@ -15,7 +15,9 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyCOP_7OSAveWdw_dl0Ds3vbgUSohyxxHAg\" -X POST -H \"Content-Type: application/json\" -d '{\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"hi\"}]}]}' 2>&1)",
       "Bash(ls E:/portfolio/.env* 2>/dev/null || echo \"none\")",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyA6SU8OrcAQdfLGUhEo_kBtXF-SodAgKws\" -X POST -H \"Content-Type: application/json\" -d '{\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"hi\"}]}]}' 2>&1)",
-      "Bash(curl -s \"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyA6SU8OrcAQdfLGUhEo_kBtXF-SodAgKws\" -X POST -H \"Content-Type: application/json\" -d '{\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"hi\"}]}]}' 2>&1 | python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d.get\\('error',{}\\).get\\('message','ok'\\)\\)\")"
+      "Bash(curl -s \"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyA6SU8OrcAQdfLGUhEo_kBtXF-SodAgKws\" -X POST -H \"Content-Type: application/json\" -d '{\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"hi\"}]}]}' 2>&1 | python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d.get\\('error',{}\\).get\\('message','ok'\\)\\)\")",
+      "WebFetch(domain:vinceumo.github.io)",
+      "WebFetch(domain:gsap.com)"
     ]
   }
 }

@@ -513,6 +513,28 @@ export default function PortfolioPage() {
         scrollTrigger: { trigger: '#hero', start: 'top top', end: '35% top', scrub: 1 },
       })
 
+      // ── SECTION STACKING — each section scales/dims as the next one slides over it ──
+      // about → AI
+      gsap.to('#about', {
+        scale: 0.94, opacity: 0.4, ease: 'none',
+        scrollTrigger: { trigger: '#ai', start: 'top 80%', end: 'top 10%', scrub: 1.2 },
+      })
+      // AI → tech
+      gsap.to('#ai', {
+        scale: 0.94, opacity: 0.4, ease: 'none',
+        scrollTrigger: { trigger: '#tech', start: 'top 80%', end: 'top 10%', scrub: 1.2 },
+      })
+      // tech → contact
+      gsap.to('#tech', {
+        scale: 0.94, opacity: 0.4, ease: 'none',
+        scrollTrigger: { trigger: '#contact', start: 'top 80%', end: 'top 10%', scrub: 1.2 },
+      })
+      // contact → footer
+      gsap.to('#contact', {
+        scale: 0.94, opacity: 0.4, ease: 'none',
+        scrollTrigger: { trigger: 'footer', start: 'top 80%', end: 'top 10%', scrub: 1.2 },
+      })
+
       const rv = 'play none none reverse' // reverse on scroll-up for all reveals
 
       // Work section entrance
@@ -734,21 +756,16 @@ export default function PortfolioPage() {
                 </p>
                 <h1
                   className="hero-item opacity-0 font-bold leading-[0.86] tracking-[-0.03em]"
-                  style={{
-                    fontFamily: 'ClashDisplay, sans-serif',
-                    fontSize: 'clamp(52px, 6.5vw, 96px)',
-                    color: '#ffffff',
-                  }}
+                  style={{ fontFamily: 'ClashDisplay, sans-serif', fontSize: 'clamp(52px, 6.5vw, 96px)', color: '#ffffff' }}
                 >
-                  Arnav
+                  {'Arnav'.split('').map((ch, i) => (
+                    <span key={i} className="name-letter" style={{ animationDelay: `${i * 0.12}s` }}>{ch}</span>
+                  ))}
                   <br />
-                  <span
-                    style={{
-                      WebkitTextStroke: '1.5px rgba(255,255,255,0.2)',
-                      color: 'transparent',
-                    }}
-                  >
-                    Raj
+                  <span style={{ WebkitTextStroke: '1.5px rgba(255,255,255,0.2)', color: 'transparent' }}>
+                    {'Raj'.split('').map((ch, i) => (
+                      <span key={i} className="name-letter" style={{ animationDelay: `${(i + 5) * 0.12}s`, WebkitTextStroke: 'inherit', color: 'inherit' }}>{ch}</span>
+                    ))}
                   </span>
                 </h1>
               </div>
@@ -865,8 +882,14 @@ export default function PortfolioPage() {
               </p>
               <h1 className="hero-item opacity-0 font-bold leading-[0.88] tracking-[-0.03em]"
                 style={{ fontFamily: 'ClashDisplay, sans-serif', fontSize: 'clamp(56px, 16vw, 88px)', color: '#fff' }}>
-                Arnav<br />
-                <span style={{ WebkitTextStroke: '1.5px rgba(255,255,255,0.2)', color: 'transparent' }}>Raj</span>
+                {'Arnav'.split('').map((ch, i) => (
+                  <span key={i} className="name-letter" style={{ animationDelay: `${i * 0.12}s` }}>{ch}</span>
+                ))}<br />
+                <span style={{ WebkitTextStroke: '1.5px rgba(255,255,255,0.2)', color: 'transparent' }}>
+                  {'Raj'.split('').map((ch, i) => (
+                    <span key={i} className="name-letter" style={{ animationDelay: `${(i + 5) * 0.12}s`, WebkitTextStroke: 'inherit', color: 'inherit' }}>{ch}</span>
+                  ))}
+                </span>
               </h1>
               <p className="hero-item opacity-0 text-[10px] tracking-[0.25em] uppercase"
                 style={{ fontFamily: 'Satoshi, sans-serif', color: 'rgba(255,255,255,0.22)' }}>
@@ -1195,7 +1218,7 @@ export default function PortfolioPage() {
         </section>
 
         {/* ── AI CHAT SECTION ────────────────────── */}
-        <section id="ai" className="relative min-h-screen" style={{ background: '#06040f', position: 'sticky', top: 0, zIndex: 20, boxShadow: '0 -40px 80px rgba(0,0,0,0.9)' }}>
+        <section id="ai" className="relative min-h-screen" style={{ background: '#06040f', position: 'sticky', top: 0, zIndex: 20, borderRadius: '20px 20px 0 0', boxShadow: '0 -8px 40px rgba(0,0,0,0.8), inset 0 1px 0 rgba(139,92,246,0.15)' }}>
           <div className="max-w-350 mx-auto px-8 md:px-14 py-28 md:pt-[18vh]">
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
 
@@ -1225,7 +1248,7 @@ export default function PortfolioPage() {
         </section>
 
         {/* ── TECH STACK SECTION ─────────────────── */}
-        <section id="tech" className="relative" style={{ background: '#06040f', overflow: 'hidden', position: 'sticky', top: 0, zIndex: 30, boxShadow: '0 -40px 80px rgba(0,0,0,0.9)' }}>
+        <section id="tech" className="relative" style={{ background: '#06040f', overflow: 'hidden', position: 'sticky', top: 0, zIndex: 30, borderRadius: '20px 20px 0 0', boxShadow: '0 -8px 40px rgba(0,0,0,0.8), inset 0 1px 0 rgba(139,92,246,0.12)' }}>
           {/* Heading */}
           <div className="max-w-350 mx-auto px-8 md:px-14 pt-24 pb-6">
             <div className="tech-heading">
@@ -1275,7 +1298,7 @@ export default function PortfolioPage() {
         </section>
 
         {/* ── CONTACT SECTION ────────────────────── */}
-        <section id="contact" className="relative py-24" style={{ pointerEvents: 'auto', background: '#06040f', overflow: 'hidden', position: 'sticky', top: 0, zIndex: 40, boxShadow: '0 -40px 80px rgba(0,0,0,0.9)' }}>
+        <section id="contact" className="relative py-24" style={{ pointerEvents: 'auto', background: '#06040f', overflow: 'hidden', position: 'sticky', top: 0, zIndex: 40, borderRadius: '20px 20px 0 0', boxShadow: '0 -8px 40px rgba(0,0,0,0.8), inset 0 1px 0 rgba(139,92,246,0.12)' }}>
           <div className="max-w-350 mx-auto px-8 md:px-14">
 
             {/* Split layout: left info | right form */}
