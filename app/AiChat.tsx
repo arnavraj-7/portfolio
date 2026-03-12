@@ -198,7 +198,7 @@ export const AiChat = memo(function AiChat() {
     <div style={{
       width: '100%',
       maxWidth: 700,
-      height: 600,
+      height: 'min(600px, 52vh)',
       display: 'flex',
       flexDirection: 'column',
       borderRadius: 24,

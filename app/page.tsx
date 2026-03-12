@@ -341,24 +341,23 @@ const TECH_ITEMS = [
    AVATAR CANVAS — memoized so page state (hover, etc.)
    never triggers a Canvas re-render and interrupts R3F
 ───────────────────────────────────────────────────── */
-const AvatarCanvas = memo(function AvatarCanvas({ onReady }: { onReady: () => void }) {
+const AvatarCanvas = memo(function AvatarCanvas({ onReady, active }: { onReady: () => void; active: boolean }) {
   return (
-    <div id="avatar-canvas-wrapper" className="avatar-canvas hidden md:block fixed inset-0 z-40 pointer-events-none">
+    <div id="avatar-canvas-wrapper" className="avatar-canvas hidden md:block fixed inset-0 z-[28] pointer-events-none">
       <Canvas
         style={{ pointerEvents: 'none' }}
         gl={{ alpha: true, antialias: false, powerPreference: 'high-performance' }}
         camera={{ position: [0, 0.3, 4], fov: 44 }}
         dpr={1}
-        frameloop="always"
+        frameloop={active ? 'always' : 'demand'}
         onCreated={({ gl }) => {
           gl.toneMapping = THREE.NoToneMapping
           gl.setClearColor(0x000000, 0)
         }}
       >
-        <ambientLight intensity={2.2} />
-        <directionalLight position={[2, 6, 4]} intensity={2.5} color="#ffffff" />
-        <directionalLight position={[-2, 2, -2]} intensity={0.6} color="#c4b5fd" />
-        <pointLight position={[0, 3, -2]} color="#a78bfa" intensity={10} />
+        <ambientLight intensity={2.5} />
+        <directionalLight position={[2, 6, 4]} intensity={2.8} color="#ffffff" />
+        <directionalLight position={[-2, 2, -2]} intensity={0.5} color="#c4b5fd" />
         <Suspense fallback={null}>
           <AvatarScene onReady={onReady} />
         </Suspense>
@@ -384,14 +383,24 @@ export default function PortfolioPage() {
     return () => window.removeEventListener('resize', onResize)
   }, [])
 
-  // Avatar fade — registered AFTER isDesktop is confirmed so the canvas is in the DOM
+  // Stop 3D canvas rendering once avatar is fully faded (saves GPU)
+  const [avatarActive, setAvatarActive] = useState(true)
+
+  // Avatar fade — starts as about section scrolls through, completes before AI
   useEffect(() => {
     if (!isDesktop) return
     const ctx = gsap.context(() => {
       gsap.to('.avatar-canvas', {
         opacity: 0,
         ease: 'power2.in',
-        scrollTrigger: { trigger: '#ai', start: 'top 100%', end: 'top 35%', scrub: 1 },
+        scrollTrigger: {
+          trigger: '#about',
+          start: 'top 30%',
+          end: 'bottom 55%',
+          scrub: 1,
+          onLeave: () => setAvatarActive(false),
+          onLeaveBack: () => setAvatarActive(true),
+        },
       })
     })
     return () => ctx.revert()
@@ -406,20 +415,31 @@ export default function PortfolioPage() {
   const previewMouseRef = useRef({ x: 0, y: 0 })
   const previewPosRef = useRef({ x: -999, y: -999 })
 
-  useEffect(() => {
-    let rafId: number
+  const previewRafRef = useRef<number>(0)
+  const previewActiveRef = useRef(false)
+
+  const startPreviewRaf = useCallback(() => {
+    if (previewActiveRef.current) return
+    previewActiveRef.current = true
     const animate = () => {
-      previewPosRef.current.x += (previewMouseRef.current.x - previewPosRef.current.x) * 0.1
-      previewPosRef.current.y += (previewMouseRef.current.y - previewPosRef.current.y) * 0.1
+      if (!previewActiveRef.current) return
+      previewPosRef.current.x += (previewMouseRef.current.x - previewPosRef.current.x) * 0.12
+      previewPosRef.current.y += (previewMouseRef.current.y - previewPosRef.current.y) * 0.12
       if (previewRef.current) {
         previewRef.current.style.left = (previewPosRef.current.x + 30) + 'px'
         previewRef.current.style.top = (previewPosRef.current.y - 95) + 'px'
       }
-      rafId = requestAnimationFrame(animate)
+      previewRafRef.current = requestAnimationFrame(animate)
     }
     animate()
-    return () => cancelAnimationFrame(rafId)
   }, [])
+
+  const stopPreviewRaf = useCallback(() => {
+    previewActiveRef.current = false
+    cancelAnimationFrame(previewRafRef.current)
+  }, [])
+
+  useEffect(() => { return () => stopPreviewRaf() }, [stopPreviewRaf])
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -497,12 +517,6 @@ export default function PortfolioPage() {
         y: -70, ease: 'none',
         scrollTrigger: { trigger: 'body', start: 'top top', end: 'bottom bottom', scrub: true },
       })
-      // Near layer (fastest) — feels like it floats in front
-      gsap.to('.parallax-near', {
-        y: -200, ease: 'none',
-        scrollTrigger: { trigger: 'body', start: 'top top', end: 'bottom bottom', scrub: true },
-      })
-
       // Hero exit on scroll — left col drifts left, right col drifts right
       gsap.to('.hero-left', {
         x: -28, opacity: 0, ease: 'none',
@@ -513,26 +527,10 @@ export default function PortfolioPage() {
         scrollTrigger: { trigger: '#hero', start: 'top top', end: '35% top', scrub: 1 },
       })
 
-      // ── SECTION STACKING — each section scales/dims as the next one slides over it ──
-      // about → AI
+      // Subtle depth: about section dims slightly as AI card enters
       gsap.to('#about', {
-        scale: 0.94, opacity: 0.4, ease: 'none',
-        scrollTrigger: { trigger: '#ai', start: 'top 80%', end: 'top 10%', scrub: 1.2 },
-      })
-      // AI → tech
-      gsap.to('#ai', {
-        scale: 0.94, opacity: 0.4, ease: 'none',
-        scrollTrigger: { trigger: '#tech', start: 'top 80%', end: 'top 10%', scrub: 1.2 },
-      })
-      // tech → contact
-      gsap.to('#tech', {
-        scale: 0.94, opacity: 0.4, ease: 'none',
-        scrollTrigger: { trigger: '#contact', start: 'top 80%', end: 'top 10%', scrub: 1.2 },
-      })
-      // contact → footer
-      gsap.to('#contact', {
-        scale: 0.94, opacity: 0.4, ease: 'none',
-        scrollTrigger: { trigger: 'footer', start: 'top 80%', end: 'top 10%', scrub: 1.2 },
+        opacity: 0.5, scale: 0.97, ease: 'none',
+        scrollTrigger: { trigger: '#ai', start: 'top 85%', end: 'top 20%', scrub: 1.2 },
       })
 
       const rv = 'play none none reverse' // reverse on scroll-up for all reveals
@@ -605,7 +603,7 @@ export default function PortfolioPage() {
   }, [])
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden" style={{ background: '#06040F', cursor: 'none' }}>
+    <div className="relative min-h-screen" style={{ background: '#06040F', cursor: 'none', overflowX: 'clip' }}>
       <div className="hidden md:block"><CustomCursor /></div>
 
       {/* ── LOADER ─────────────────────────────────── */}
@@ -631,6 +629,7 @@ export default function PortfolioPage() {
         <div className="parallax-far absolute bottom-0 left-0 right-0" style={{
           height: '45vh',
           background: 'radial-gradient(ellipse 120% 60% at 50% 100%, rgba(76,29,149,0.35) 0%, transparent 70%)',
+          willChange: 'transform',
         }} />
 
         {/* Horizon atmospheric glow — mid layer */}
@@ -639,6 +638,7 @@ export default function PortfolioPage() {
           style={{
             height: '58vh',
             background: 'radial-gradient(ellipse 95% 68% at 50% 100%, rgba(109,40,217,0.75) 0%, rgba(76,29,149,0.45) 26%, rgba(49,17,97,0.15) 50%, transparent 70%)',
+            willChange: 'transform',
           }}
         />
 
@@ -650,6 +650,7 @@ export default function PortfolioPage() {
             borderRadius: '50%',
             border: '1px solid rgba(196,181,253,0.09)',
             boxShadow: '0 -12px 60px rgba(139,92,246,0.5), 0 -32px 120px rgba(109,40,217,0.25), inset 0 28px 80px rgba(109,40,217,0.18)',
+            willChange: 'transform',
           }}
         />
 
@@ -677,7 +678,7 @@ export default function PortfolioPage() {
       />
 
       {/* ── 3D CANVAS — only on desktop; mobile uses MobileAvatarCircle ── */}
-      {isDesktop && <AvatarCanvas onReady={handleAvatarReady} />}
+      {isDesktop && <AvatarCanvas onReady={handleAvatarReady} active={avatarActive} />}
 
       {/* ── NAVBAR ─────────────────────────────────── */}
       <nav ref={navRef} className="fixed top-0 left-0 right-0 z-50 opacity-0">
@@ -899,19 +900,20 @@ export default function PortfolioPage() {
                 style={{ fontFamily: 'Satoshi, sans-serif', color: 'rgba(148,163,184,0.5)', maxWidth: 260 }}>
                 Engineering digital experiences that matter.
               </p>
-              {/* Spacer for avatar */}
-              <div className="h-[45vw]" />
+              {/* CTAs above the blob — moved before the avatar spacer */}
               <div className="hero-item opacity-0 flex flex-col gap-3 items-center" style={{ pointerEvents: 'auto' }}>
                 <AnimatedBorderButton href="#work">View Work →</AnimatedBorderButton>
                 <a href="mailto:arnavrajcodes@gmail.com" className="text-sm" style={{ fontFamily: 'Satoshi, sans-serif', color: 'rgba(255,255,255,0.35)' }}>
                   Let&apos;s Connect →
                 </a>
               </div>
-              <div className="hero-item opacity-0 flex items-center gap-6 mt-2" style={{ pointerEvents: 'auto', color: 'rgba(255,255,255,0.2)' }}>
+              <div className="hero-item opacity-0 flex items-center gap-6" style={{ pointerEvents: 'auto', color: 'rgba(255,255,255,0.2)' }}>
                 <a href="https://github.com/arnavraj-7" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-white"><GitHubIcon /></a>
                 <a href="https://www.linkedin.com/in/arnav-raj-7142b8313/" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-white"><LinkedInIcon /></a>
                 <a href="https://www.instagram.com/arnavraj.dev" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-white"><InstagramIcon /></a>
               </div>
+              {/* Spacer that pushes avatar area / blob to bottom */}
+              <div className="h-[38vw]" />
             </div>
           </div>
 
@@ -959,8 +961,8 @@ export default function PortfolioPage() {
                   key={p.num}
                   className="work-card group"
                   style={{ position: 'relative', borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '40px 0', transition: 'background 0.4s', cursor: p.url ? 'pointer' : 'default' }}
-                  onMouseEnter={() => setHoveredWork(i)}
-                  onMouseLeave={() => setHoveredWork(null)}
+                  onMouseEnter={() => { setHoveredWork(i); startPreviewRaf() }}
+                  onMouseLeave={() => { setHoveredWork(null); stopPreviewRaf() }}
                   onMouseMove={(e) => { previewMouseRef.current = { x: e.clientX, y: e.clientY } }}
                 >
                   {/* Stretched link — makes entire card clickable */}
@@ -1121,8 +1123,8 @@ export default function PortfolioPage() {
         <div className="h-6 md:h-[40vh]" />
 
         {/* ── ABOUT SECTION ──────────────────────── */}
-        <section id="about" className="relative min-h-screen py-16 md:py-28" style={{ position: 'sticky', top: 0, zIndex: 10 }}>
-          <div className="max-w-350 mx-auto px-8 md:px-14 pt-10 md:pt-[45vh]">
+        <section id="about" className="relative py-20 md:py-28">
+          <div className="max-w-350 mx-auto px-8 md:px-14 pt-10 md:pt-20">
             <div className="md:pr-[48%]">
 
               {/* Label */}
@@ -1218,8 +1220,8 @@ export default function PortfolioPage() {
         </section>
 
         {/* ── AI CHAT SECTION ────────────────────── */}
-        <section id="ai" className="relative min-h-screen" style={{ background: '#06040f', position: 'sticky', top: 0, zIndex: 20, borderRadius: '20px 20px 0 0', boxShadow: '0 -8px 40px rgba(0,0,0,0.8), inset 0 1px 0 rgba(139,92,246,0.15)' }}>
-          <div className="max-w-350 mx-auto px-8 md:px-14 py-28 md:pt-[18vh]">
+        <section id="ai" className="relative" style={{ background: '#06040f', borderRadius: '20px 20px 0 0', boxShadow: '0 -8px 40px rgba(0,0,0,0.8), inset 0 1px 0 rgba(139,92,246,0.15)' }}>
+          <div className="max-w-350 mx-auto px-8 md:px-14 pt-10 pb-12 md:pt-12 md:pb-16">
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
 
               {/* Label */}
@@ -1248,7 +1250,7 @@ export default function PortfolioPage() {
         </section>
 
         {/* ── TECH STACK SECTION ─────────────────── */}
-        <section id="tech" className="relative" style={{ background: '#06040f', overflow: 'hidden', position: 'sticky', top: 0, zIndex: 30, borderRadius: '20px 20px 0 0', boxShadow: '0 -8px 40px rgba(0,0,0,0.8), inset 0 1px 0 rgba(139,92,246,0.12)' }}>
+        <section id="tech" className="relative" style={{ background: '#06040f', overflow: 'hidden', borderRadius: '20px 20px 0 0', boxShadow: '0 -8px 40px rgba(0,0,0,0.8), inset 0 1px 0 rgba(139,92,246,0.12)' }}>
           {/* Heading */}
           <div className="max-w-350 mx-auto px-8 md:px-14 pt-24 pb-6">
             <div className="tech-heading">
@@ -1298,7 +1300,7 @@ export default function PortfolioPage() {
         </section>
 
         {/* ── CONTACT SECTION ────────────────────── */}
-        <section id="contact" className="relative py-24" style={{ pointerEvents: 'auto', background: '#06040f', overflow: 'hidden', position: 'sticky', top: 0, zIndex: 40, borderRadius: '20px 20px 0 0', boxShadow: '0 -8px 40px rgba(0,0,0,0.8), inset 0 1px 0 rgba(139,92,246,0.12)' }}>
+        <section id="contact" className="relative py-24" style={{ pointerEvents: 'auto', background: '#06040f', overflow: 'hidden', borderRadius: '20px 20px 0 0', boxShadow: '0 -8px 40px rgba(0,0,0,0.8), inset 0 1px 0 rgba(139,92,246,0.12)' }}>
           <div className="max-w-350 mx-auto px-8 md:px-14">
 
             {/* Split layout: left info | right form */}

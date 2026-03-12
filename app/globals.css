@@ -211,6 +211,7 @@ body {
   display: inline-block;
   animation: name-letter-float 3s ease-in-out infinite;
   transition: color 0.2s, text-shadow 0.2s;
+  will-change: transform;
 }
 .name-letter:hover {
   color: rgba(196,181,253,0.95);

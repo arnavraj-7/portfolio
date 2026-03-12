@@ -4,7 +4,6 @@ import * as THREE from 'three'
 import { useRef, useMemo, useState, useEffect } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { Environment } from '@react-three/drei'
-import { EffectComposer, N8AO } from '@react-three/postprocessing'
 import {
   BallCollider,
   Physics,
@@ -26,11 +25,9 @@ const imageUrls = [
 ]
 
 // sphereGeometry is safe at module level (no browser APIs)
-const sphereGeometry = new THREE.SphereGeometry(1, 28, 28)
+const sphereGeometry = new THREE.SphereGeometry(1, 24, 24)
 
-// Textures must be created client-side only — loaded inside useMemo in the component
-
-const spheres = [...Array(20)].map(() => ({
+const spheres = [...Array(16)].map(() => ({
   scale: [0.75, 1, 0.85, 1, 1.1][Math.floor(Math.random() * 5)],
 }))
 
@@ -38,7 +35,7 @@ type SphereProps = {
   vec?: THREE.Vector3
   scale: number
   r?: typeof THREE.MathUtils.randFloatSpread
-  material: THREE.MeshPhysicalMaterial
+  material: THREE.MeshStandardMaterial
   isActive: boolean
 }
 
@@ -83,8 +80,6 @@ function SphereGeo({
         args={[0.15 * scale, 0.275 * scale]}
       />
       <mesh
-        castShadow
-        receiveShadow
         scale={scale}
         geometry={sphereGeometry}
         material={material}
@@ -130,7 +125,6 @@ export function TechStack() {
       const el = document.getElementById('tech')
       if (!el) return
       const rect = el.getBoundingClientRect()
-      // Activate when tech section is within viewport
       setIsActive(rect.top < window.innerHeight && rect.bottom > 0)
     }
     window.addEventListener('scroll', check, { passive: true })
@@ -144,21 +138,19 @@ export function TechStack() {
     return imageUrls.map((url) => {
       const texture = loader.load(url)
       texture.flipY = false
-      return new THREE.MeshPhysicalMaterial({
+      return new THREE.MeshStandardMaterial({
         map: texture,
         emissive: '#ffffff',
         emissiveMap: texture,
         emissiveIntensity: 0.25,
-        metalness: 0.5,
+        metalness: 0.4,
         roughness: 0.9,
-        clearcoat: 0.1,
       })
     })
   }, [])
 
   return (
     <Canvas
-      shadows
       gl={{ alpha: true, stencil: false, depth: false, antialias: false }}
       camera={{ position: [0, 0, 20], fov: 32.5, near: 1, far: 100 }}
       frameloop={isActive ? 'always' : 'never'}
@@ -166,16 +158,9 @@ export function TechStack() {
       onCreated={(state) => { state.gl.toneMappingExposure = 1.5 }}
       style={{ width: '100%', height: '100%' }}
     >
-      <ambientLight intensity={1} />
-      <spotLight
-        position={[20, 20, 25]}
-        penumbra={1}
-        angle={0.2}
-        color="white"
-        castShadow
-        shadow-mapSize={[512, 512]}
-      />
-      <directionalLight position={[0, 5, -4]} intensity={2} />
+      <ambientLight intensity={1.2} />
+      <directionalLight position={[20, 20, 25]} intensity={1.5} color="white" />
+      <directionalLight position={[0, 5, -4]} intensity={1.8} />
       <Physics gravity={[0, 0, 0]}>
         <Pointer isActive={isActive} />
         {spheres.map((props, i) => (
@@ -187,10 +172,7 @@ export function TechStack() {
           />
         ))}
       </Physics>
-      <Environment preset="city" environmentIntensity={0.5} />
-      <EffectComposer enableNormalPass={false}>
-        <N8AO color="#0f002c" aoRadius={2} intensity={1.15} />
-      </EffectComposer>
+      <Environment preset="city" environmentIntensity={0.4} />
     </Canvas>
   )
 }
