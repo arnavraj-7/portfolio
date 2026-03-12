@@ -1,16 +1,10 @@
 'use client'
 
-import { useState, useRef, useEffect, memo, Suspense } from 'react'
-import dynamic from 'next/dynamic'
-
-// Dynamically import R3F only on client — avoids SSR issues
-const MobileAvatarCanvas = dynamic(() => import('./MobileAvatarCircle'), { ssr: false })
+import { useState, useRef, useEffect, memo } from 'react'
 
 /* ─────────────────────────────────────────────────────
-   GEMINI CONFIG
+   GEMINI CONFIG — key lives in .env.local (server-side only)
 ───────────────────────────────────────────────────── */
-const GEMINI_KEY = 'AIzaSyCOP_7OSAveWdw_dl0Ds3vbgUSohyxxHAg'
-const GEMINI_MODEL = 'gemini-2.5-flash'
 
 const SYSTEM_PROMPT = `You are AJ — the personal AI of Arnav Raj, speaking in first person as Arnav.
 You ONLY answer questions about Arnav Raj. For any unrelated topic, respond:
@@ -158,18 +152,15 @@ export const AiChat = memo(function AiChat() {
         parts: [{ text: m.text }],
       }))
 
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-            contents: [...history, { role: 'user', parts: [{ text: trimmed }] }],
-            generationConfig: { temperature: 0.75, maxOutputTokens: 280 },
-          }),
-        }
-      )
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+          contents: [...history, { role: 'user', parts: [{ text: trimmed }] }],
+          generationConfig: { temperature: 0.75, maxOutputTokens: 280 },
+        }),
+      })
 
       const json = await res.json()
       if (json.error) throw new Error(json.error.message ?? 'API error')
@@ -237,68 +228,26 @@ export const AiChat = memo(function AiChat() {
         <div key={i} style={{ position: 'absolute', width: 10, height: 10, pointerEvents: 'none', zIndex: 10, ...style }} />
       ))}
 
-      {/* ── HEADER ───────────────────────────── */}
+      {/* ── STATUS BAR — slim, no avatar circle ── */}
       <div style={{
-        padding: '14px 18px',
-        borderBottom: '1px solid rgba(139,92,246,0.1)',
-        background: 'linear-gradient(180deg, rgba(109,40,217,0.05) 0%, transparent 100%)',
-        display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0,
-        position: 'relative', zIndex: 2,
+        padding: '10px 20px',
+        borderBottom: '1px solid rgba(139,92,246,0.08)',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        flexShrink: 0, position: 'relative', zIndex: 2,
       }}>
-        {/* Avatar circle */}
-        <div
-          id="aj-avatar-target"
-          style={{
-            width: 52, height: 52, borderRadius: '50%', flexShrink: 0,
-            background: 'linear-gradient(135deg, rgba(109,40,217,0.7) 0%, rgba(139,92,246,0.5) 100%)',
-            border: '1.5px solid rgba(139,92,246,0.6)',
-            boxShadow: '0 0 0 3px rgba(139,92,246,0.08), 0 0 24px rgba(139,92,246,0.35)',
-            position: 'relative', overflow: 'hidden',
-            animation: 'aj-ring-pulse 3s ease-in-out infinite',
-          }}
-        >
-          {/* Mobile only: mini 3D avatar clipped to circle (desktop uses main canvas) */}
-          <div className="md:hidden" style={{ position: 'absolute', inset: 0 }}>
-            <MobileAvatarCanvas />
-          </div>
-
-          {/* AJ text — always shown on desktop, fades on mobile once model loads */}
-          <span
-            id="aj-text"
-            style={{
-              position: 'absolute', inset: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: 'ClashDisplay, sans-serif', fontSize: 17,
-              fontWeight: 700, color: '#e9d5ff', letterSpacing: '-0.01em',
-              transition: 'opacity 0.5s', pointerEvents: 'none', zIndex: 1,
-            }}
-          >
-            AJ
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <span style={{
+            width: 6, height: 6, borderRadius: '50%', background: '#4ade80',
+            boxShadow: '0 0 8px rgba(74,222,128,0.9)', flexShrink: 0,
+            animation: 'badge-pulse 2.5s ease-in-out infinite',
+          }} />
+          <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            AJ · online
           </span>
         </div>
-
-        <div style={{ flex: 1 }}>
-          <div style={{
-            fontFamily: 'ClashDisplay, sans-serif', fontSize: 16, fontWeight: 700,
-            letterSpacing: '-0.02em', lineHeight: 1,
-            background: 'linear-gradient(90deg, #ffffff 0%, #c4b5fd 60%, #a78bfa 100%)',
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-          }}>
-            Arnav AI
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4 }}>
-            <span style={{
-              width: 6, height: 6, borderRadius: '50%', background: '#4ade80',
-              boxShadow: '0 0 8px rgba(74,222,128,1)',
-              flexShrink: 0,
-              animation: 'badge-pulse 2.5s ease-in-out infinite',
-            }} />
-            <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.32)', letterSpacing: '0.04em' }}>
-              online — ask me anything
-            </span>
-          </div>
-        </div>
-
+        <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 10, color: 'rgba(139,92,246,0.4)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+          Gemini 2.5
+        </span>
       </div>
 
       {/* ── MESSAGES ─────────────────────────── */}

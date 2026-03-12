@@ -62,13 +62,6 @@ function AvatarScene({ onReady }: { onReady: () => void }) {
   const mousePos = useRef({ x: 0, y: 0 })
   // 0 = hero (cursor tracking), 1 = work section (fixed look right)
   const scrollWeight = useRef(0)
-  const aiProgressRef = useRef(0)
-  // Pre-allocated vectors — avoids GC churn in useFrame (60fps)
-  const _unprojectVec = useRef(new THREE.Vector3())
-  const _rayDir = useRef(new THREE.Vector3())
-  // ↓ Tweak this single value to adjust avatar vertical position inside circle
-  // Positive = moves UP. Start: 0.06, range: -0.1 to +0.2
-  const AI_Y_OFFSET = 0.06
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
@@ -177,36 +170,11 @@ function AvatarScene({ onReady }: { onReady: () => void }) {
       onLeaveBack: () => ajModelRef.current?.playAnimation('BreathingIdle'),
     })
 
-    // AI Chat section — start when circle is already IN viewport (not below it)
-    // #ai header circle is ~390px from section top; start when section top = 0%
-    // (circle is at 390px / viewport_height from top — typically ~45%)
-    // end when section is scrolled up so circle sits nicely in upper area
-    const aiST = ScrollTrigger.create({
+    // Kill posTimeline when AI section enters so it doesn't fight the fade
+    const aiEnterTrigger = ScrollTrigger.create({
       trigger: '#ai',
-      start: 'top 5%',
-      end: 'top -40%',
-      scrub: 1.2,
-      onEnter: () => posTimeline.kill(), // stop posTimeline fighting useFrame
-      onUpdate: (self) => {
-        aiProgressRef.current = self.progress
-        // Fade AJ text out as avatar enters circle
-        const ajText = document.getElementById('aj-text')
-        if (ajText) {
-          ajText.style.opacity = String(Math.max(0, 1 - self.progress * 3))
-          ajText.style.transition = 'none'
-        }
-      },
-      onLeaveBack: () => {
-        const ajText = document.getElementById('aj-text')
-        if (ajText) ajText.style.opacity = '1'
-        const wrapper = document.getElementById('avatar-canvas-wrapper')
-        if (wrapper) wrapper.style.clipPath = 'none'
-      },
-    })
-
-    const aiAnimTrigger = ScrollTrigger.create({
-      trigger: '#ai',
-      start: 'top 55%',
+      start: 'top 80%',
+      onEnter: () => posTimeline.kill(),
       onLeaveBack: () => ajModelRef.current?.playAnimation('BreathingIdle'),
     })
 
@@ -216,60 +184,17 @@ function AvatarScene({ onReady }: { onReady: () => void }) {
       headWeightOut.kill()
       animTrigger.kill()
       aboutAnimTrigger.kill()
-      aiST.kill()
-      aiAnimTrigger.kill()
+      aiEnterTrigger.kill()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  useFrame(({ camera }) => {
+  useFrame(() => {
     if (!modelRef.current) return
 
     // Cache head bone — avoids scene graph traversal every frame
     if (!headBoneRef.current) {
       headBoneRef.current = modelRef.current.getObjectByName('mixamorigHead') ?? null
-    }
-
-    // ── AI section: clip canvas to circle + shrink avatar ────────────────────
-    const aiP = aiProgressRef.current
-    const wrapper = typeof document !== 'undefined'
-      ? document.getElementById('avatar-canvas-wrapper') : null
-    const circleEl = typeof document !== 'undefined'
-      ? document.getElementById('aj-avatar-target') : null
-
-    if (aiP > 0 && groupRef.current && wrapper && circleEl) {
-      const rect = circleEl.getBoundingClientRect()
-      const cx = rect.left + rect.width / 2
-      const cy = rect.top + rect.height / 2
-      const circleR = rect.width / 2
-
-      // ep: cubic ease-in-out on scroll progress
-      const ep = aiP < 0.5 ? 4 * aiP * aiP * aiP : 1 - Math.pow(-2 * aiP + 2, 3) / 2
-
-      // Clip canvas: radius shrinks from full-screen diagonal → circle radius
-      // This GUARANTEES avatar is inside the circle at ep=1
-      const maxR = Math.sqrt(window.innerWidth ** 2 + window.innerHeight ** 2)
-      const clipR = THREE.MathUtils.lerp(maxR, circleR, ep)
-      wrapper.style.clipPath = `circle(${clipR}px at ${cx}px ${cy}px)`
-
-      // Exact world position via camera.unproject() — mathematically correct for any fov/camera
-      const ndcX = (cx / window.innerWidth) * 2 - 1
-      const ndcY = -((cy / window.innerHeight) * 2 - 1)
-      _unprojectVec.current.set(ndcX, ndcY, 0.5)
-      _unprojectVec.current.unproject(camera)
-      _rayDir.current.copy(_unprojectVec.current).sub(camera.position).normalize()
-      // Intersect ray with z=0 plane (avatar lives at z≈0)
-      const tDist = -camera.position.z / _rayDir.current.z
-      const tx = camera.position.x + _rayDir.current.x * tDist
-      const ty = camera.position.y + _rayDir.current.y * tDist + AI_Y_OFFSET
-      groupRef.current.position.x = THREE.MathUtils.lerp(1.6, tx, ep)
-      groupRef.current.position.y = THREE.MathUtils.lerp(-0.4, ty, ep)
-      groupRef.current.scale.setScalar(THREE.MathUtils.lerp(1, 0.055, ep))
-      groupRef.current.rotation.y = THREE.MathUtils.lerp(-0.5, 0, ep)
-
-    } else if (wrapper) {
-      // Restore full canvas when not in AI section
-      wrapper.style.clipPath = 'none'
     }
 
     // ── Head tracking (cursor follow / blend with scroll weight) ──────────
@@ -450,6 +375,28 @@ export default function PortfolioPage() {
   const navRef = useRef<HTMLElement>(null)
   const handleAvatarReady = useCallback(() => {}, [])
 
+  // Don't mount main 3D canvas on mobile — prevents dual-WebGL-context texture corruption
+  const [isDesktop, setIsDesktop] = useState(false)
+  useEffect(() => {
+    setIsDesktop(window.innerWidth >= 768)
+    const onResize = () => setIsDesktop(window.innerWidth >= 768)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  // Avatar fade — registered AFTER isDesktop is confirmed so the canvas is in the DOM
+  useEffect(() => {
+    if (!isDesktop) return
+    const ctx = gsap.context(() => {
+      gsap.to('.avatar-canvas', {
+        opacity: 0,
+        ease: 'power2.in',
+        scrollTrigger: { trigger: '#ai', start: 'top 75%', end: 'top 20%', scrub: 1 },
+      })
+    })
+    return () => ctx.revert()
+  }, [isDesktop])
+
   // ── Contact form state ────────────────────────────
   const [formStatus, setFormStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
 
@@ -576,14 +523,14 @@ export default function PortfolioPage() {
         { x: 0, opacity: 1, duration: 0.6, stagger: 0.12, ease: 'power2.out', scrollTrigger: { trigger: '.work-card', start: 'top 88%' } }
       )
 
-      // About
+      // About — headings slide in from left, items stagger up with clear rhythm
       gsap.fromTo('.about-heading',
-        { x: 24, opacity: 0 },
-        { x: 0, opacity: 1, duration: 0.7, ease: 'power2.out', scrollTrigger: { trigger: '.about-heading', start: 'top 88%' } }
+        { x: -28, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.75, ease: 'power3.out', stagger: 0.12, scrollTrigger: { trigger: '#about', start: 'top 80%' } }
       )
       gsap.fromTo('.about-item',
-        { y: 20, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.6, stagger: 0.1, ease: 'power2.out', scrollTrigger: { trigger: '.about-heading', start: 'top 75%' } }
+        { y: 28, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.65, stagger: 0.14, ease: 'power2.out', scrollTrigger: { trigger: '#about', start: 'top 65%' } }
       )
 
       // AI chat section
@@ -602,22 +549,35 @@ export default function PortfolioPage() {
         { y: 0, opacity: 1, duration: 0.7, ease: 'power2.out', scrollTrigger: { trigger: '.tech-heading', start: 'top 88%' } }
       )
 
-      // Fade avatar out as tech section enters, back in when scrolling up
-      gsap.to('.avatar-canvas', {
-        opacity: 0,
-        ease: 'none',
-        scrollTrigger: { trigger: '#tech', start: 'top 70%', end: 'top 20%', scrub: 1 },
-      })
 
-      // Contact
-      gsap.fromTo('.contact-heading',
-        { y: 24, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.7, ease: 'power2.out', scrollTrigger: { trigger: '.contact-heading', start: 'top 88%' } }
+      // Contact — left col slides from left, form card slides from right
+      gsap.fromTo('.contact-left',
+        { x: -32, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.75, ease: 'power3.out', scrollTrigger: { trigger: '#contact', start: 'top 82%' } }
       )
-      gsap.fromTo('.contact-form',
+      gsap.fromTo('.contact-card',
+        { x: 32, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.75, ease: 'power3.out', scrollTrigger: { trigger: '#contact', start: 'top 82%' } }
+      )
+      // Form fields stagger up after the card is visible
+      gsap.fromTo('.contact-field',
         { y: 20, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.6, stagger: 0.08, ease: 'power2.out', scrollTrigger: { trigger: '.contact-form', start: 'top 85%' } }
+        { y: 0, opacity: 1, duration: 0.55, stagger: 0.1, ease: 'power2.out', scrollTrigger: { trigger: '#contact', start: 'top 68%' } }
       )
+
+      // Footer — big heading slides up, links fade in, meta fades last
+      gsap.fromTo('.footer-cta',
+        { y: 36, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.85, ease: 'power3.out', scrollTrigger: { trigger: 'footer', start: 'top 88%' } }
+      )
+      gsap.fromTo('.footer-meta',
+        { opacity: 0 },
+        { opacity: 1, duration: 0.6, ease: 'power2.out', scrollTrigger: { trigger: 'footer', start: 'top 55%' } }
+      )
+
+      // Recalculate all scroll trigger positions after a tick —
+      // ensures contact/footer triggers are correct after any DOM changes
+      ScrollTrigger.refresh()
     })
     return () => ctx.revert()
   }, [])
@@ -694,8 +654,8 @@ export default function PortfolioPage() {
         }}
       />
 
-      {/* ── 3D CANVAS — memo prevents re-render on any page state change ── */}
-      <AvatarCanvas onReady={handleAvatarReady} />
+      {/* ── 3D CANVAS — only on desktop; mobile uses MobileAvatarCircle ── */}
+      {isDesktop && <AvatarCanvas onReady={handleAvatarReady} />}
 
       {/* ── NAVBAR ─────────────────────────────────── */}
       <nav ref={navRef} className="fixed top-0 left-0 right-0 z-50 opacity-0">
@@ -1322,7 +1282,7 @@ export default function PortfolioPage() {
             <div className="contact-heading grid grid-cols-1 md:grid-cols-[5fr_6fr] gap-14 md:gap-16 items-start">
 
               {/* LEFT — headline + contact info */}
-              <div style={{ paddingTop: 8 }}>
+              <div className="contact-left" style={{ paddingTop: 8 }}>
                 <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 10, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'rgba(167,139,250,0.45)', marginBottom: 20 }}>
                   Get In Touch
                 </p>
@@ -1397,7 +1357,7 @@ export default function PortfolioPage() {
               >
                 {/* Underline inputs */}
                 {(['name', 'email'] as const).map((field) => (
-                  <div key={field} style={{ position: 'relative', marginBottom: 32 }}>
+                  <div key={field} className="contact-field" style={{ position: 'relative', marginBottom: 32 }}>
                     <label style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(167,139,250,0.5)', display: 'block', marginBottom: 10 }}>
                       {field === 'name' ? 'Your Name' : 'Email Address'}
                     </label>
@@ -1417,7 +1377,7 @@ export default function PortfolioPage() {
                     />
                   </div>
                 ))}
-                <div style={{ position: 'relative', marginBottom: 36 }}>
+                <div className="contact-field" style={{ position: 'relative', marginBottom: 36 }}>
                   <label style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(167,139,250,0.5)', display: 'block', marginBottom: 10 }}>
                     Message
                   </label>
@@ -1466,7 +1426,7 @@ export default function PortfolioPage() {
           <div className="max-w-350 mx-auto px-6 md:px-14" style={{ paddingTop: 56, paddingBottom: 32 }}>
 
             {/* Big CTA row */}
-            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 40, flexWrap: 'wrap', marginBottom: 64 }}>
+            <div className="footer-cta" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 40, flexWrap: 'wrap', marginBottom: 64 }}>
 
               {/* Left — big type */}
               <div style={{ flex: 1, minWidth: 260 }}>
@@ -1509,7 +1469,7 @@ export default function PortfolioPage() {
             <div style={{ height: 1, background: 'rgba(255,255,255,0.05)', marginBottom: 24 }} />
 
             {/* Bottom row */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+            <div className="footer-meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
               <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.1)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                 Arnav Raj · Full Stack Developer · CPO @ Dreamvator
               </span>
