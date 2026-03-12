@@ -12,6 +12,7 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
 import { AjModel, AjModelHandle } from './AjModel'
 import { TechStack } from './TechStack'
+import { AiChat } from './AiChat'
 import { CustomCursor } from './CustomCursor'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -169,12 +170,38 @@ function AvatarScene({ onReady }: { onReady: () => void }) {
       onLeaveBack: () => ajModelRef.current?.playAnimation('BreathingIdle'),
     })
 
+    // AI Chat section — avatar scales down and moves left to sit beside the chat window
+    const aiTimeline = gsap.timeline({
+      scrollTrigger: {
+        trigger: '#ai',
+        start: 'top 75%',
+        end: 'top 15%',
+        scrub: 1.5,
+      },
+    })
+    aiTimeline
+      .to(groupRef.current.position, { x: -2.3, y: 0.1, ease: 'power2.inOut', duration: 1 })
+      .to(groupRef.current.scale,    { x: 0.38, y: 0.38, z: 0.38, ease: 'power2.inOut', duration: 1 }, '<')
+      .to(groupRef.current.rotation, { y: 0.4, ease: 'power2.inOut', duration: 1 }, '<')
+
+    const aiAnimTrigger = ScrollTrigger.create({
+      trigger: '#ai',
+      start: 'top 55%',
+      onEnter: () => {
+        ajModelRef.current?.playAnimation('WavingGesture')
+        setTimeout(() => ajModelRef.current?.playAnimation('BreathingIdle'), 2600)
+      },
+      onLeaveBack: () => ajModelRef.current?.playAnimation('BreathingIdle'),
+    })
+
     return () => {
       posTimeline.kill()
       headWeightIn.kill()
       headWeightOut.kill()
       animTrigger.kill()
       aboutAnimTrigger.kill()
+      aiTimeline.kill()
+      aiAnimTrigger.kill()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -272,9 +299,10 @@ const PROJECTS = [
     name: 'Dreamvator',
     type: 'Stealth Startup',
     desc: 'Something revolutionary is coming. Stay tuned.',
-    stack: ['Next.js', 'Supabase'],
+    stack: ['Launching soon'],
     url: 'https://www.dreamvator.com',
     year: '2024',
+    screenshot: '/previews/dreamvator.png',
     preview: {
       bg: 'linear-gradient(135deg, #0f0020 0%, #2d1260 55%, #1a0a40 100%)',
       domain: 'dreamvator.com',
@@ -289,6 +317,7 @@ const PROJECTS = [
     stack: ['Next.js', 'Solidity', 'Ethereum', 'IPFS', 'Pinata', 'TypeScript'],
     url: 'https://crowd-spark-ten.vercel.app',
     year: '2025',
+    screenshot: '/previews/crowdspark.png',
     preview: {
       bg: 'linear-gradient(135deg, #020b14 0%, #0a1f3a 50%, #0d2b50 100%)',
       domain: 'crowd-spark-ten.vercel.app',
@@ -303,6 +332,7 @@ const PROJECTS = [
     stack: ['Next.js', 'Vercel'],
     url: 'https://oddplanet.vercel.app/',
     year: '2024',
+    screenshot: '/previews/oddplanet.png',
     preview: {
       bg: 'linear-gradient(135deg, #050510 0%, #0d1b2a 50%, #162032 100%)',
       domain: 'oddplanet.vercel.app',
@@ -311,6 +341,17 @@ const PROJECTS = [
   },
 ]
 
+
+const TECH_ITEMS = [
+  { icon: 'devicon-react-original colored',         name: 'React' },
+  { icon: 'devicon-nextjs-plain',                   name: 'Next.js' },
+  { icon: 'devicon-nodejs-plain colored',           name: 'Node.js' },
+  { icon: 'devicon-express-original',               name: 'Express' },
+  { icon: 'devicon-reactnative-plain colored',      name: 'React Native' },
+  { icon: 'devicon-mysql-plain colored',            name: 'MySQL' },
+  { icon: 'devicon-typescript-plain colored',       name: 'TypeScript' },
+  { icon: 'devicon-javascript-plain colored',       name: 'JavaScript' },
+]
 
 /* ─────────────────────────────────────────────────────
    AVATAR CANVAS — memoized so page state (hover, etc.)
@@ -485,6 +526,16 @@ export default function PortfolioPage() {
         { y: 0, opacity: 1, duration: 0.6, stagger: 0.1, ease: 'power2.out', scrollTrigger: { trigger: '.about-heading', start: 'top 75%' } }
       )
 
+      // AI chat section
+      gsap.fromTo('.ai-heading',
+        { y: 20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.7, ease: 'power2.out', scrollTrigger: { trigger: '.ai-heading', start: 'top 88%' } }
+      )
+      gsap.fromTo('.ai-body',
+        { y: 24, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.7, ease: 'power2.out', scrollTrigger: { trigger: '.ai-body', start: 'top 88%' } }
+      )
+
       // Tech stack heading
       gsap.fromTo('.tech-heading',
         { y: 20, opacity: 0 },
@@ -513,7 +564,7 @@ export default function PortfolioPage() {
 
   return (
     <div className="relative min-h-screen overflow-x-hidden" style={{ background: '#06040F', cursor: 'none' }}>
-      <CustomCursor />
+      <div className="hidden md:block"><CustomCursor /></div>
 
       {/* ── LOADER ─────────────────────────────────── */}
       <div
@@ -574,6 +625,15 @@ export default function PortfolioPage() {
           style={{ background: 'linear-gradient(to bottom, #06040F 0%, transparent 100%)' }} />
       </div>
 
+      {/* ── SECTION OVERLAY — softens horizon blob + darkens bg for sections below hero ── */}
+      <div
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          zIndex: 2,
+          background: 'linear-gradient(to bottom, transparent 58vh, rgba(4,2,12,0.48) 90vh, rgba(4,2,12,0.68) 115vh, rgba(4,2,12,0.68) 100%)',
+        }}
+      />
+
       {/* ── 3D CANVAS — memo prevents re-render on any page state change ── */}
       <AvatarCanvas onReady={handleAvatarReady} />
 
@@ -586,10 +646,10 @@ export default function PortfolioPage() {
 
           {/* Center — nav links */}
           <div className="flex items-center gap-10">
-            {(['Work', 'About', 'Contact'] as const).map((label) => (
+            {(['Work', 'About', 'AI', 'Contact'] as const).map((label) => (
               <a
                 key={label}
-                href={`#${label.toLowerCase()}`}
+                href={`#${label.toLowerCase() === 'ai' ? 'ai' : label.toLowerCase()}`}
                 className="nav-link text-sm transition-colors duration-300"
                 style={{
                   fontFamily: 'Satoshi, sans-serif',
@@ -855,11 +915,21 @@ export default function PortfolioPage() {
                 <div
                   key={p.num}
                   className="work-card group"
-                  style={{ position: 'relative', borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '40px 0', transition: 'background 0.4s' }}
+                  style={{ position: 'relative', borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '40px 0', transition: 'background 0.4s', cursor: p.url ? 'pointer' : 'default' }}
                   onMouseEnter={() => setHoveredWork(i)}
                   onMouseLeave={() => setHoveredWork(null)}
                   onMouseMove={(e) => { previewMouseRef.current = { x: e.clientX, y: e.clientY } }}
                 >
+                  {/* Stretched link — makes entire card clickable */}
+                  {p.url && (
+                    <a
+                      href={p.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`Visit ${p.name}`}
+                      style={{ position: 'absolute', inset: 0, zIndex: 0 }}
+                    />
+                  )}
                   {/* Ghost large number */}
                   <span aria-hidden style={{
                     position: 'absolute', right: -8, top: '50%', transform: 'translateY(-50%)',
@@ -931,7 +1001,7 @@ export default function PortfolioPage() {
                           border: '1px solid rgba(255,255,255,0.08)',
                           background: hoveredWork === i ? 'rgba(139,92,246,0.15)' : 'transparent',
                           color: hoveredWork === i ? '#c4b5fd' : 'rgba(255,255,255,0.25)',
-                          transition: 'all 0.3s', pointerEvents: 'auto', marginTop: 4,
+                          transition: 'all 0.3s', pointerEvents: 'auto', marginTop: 4, position: 'relative', zIndex: 1,
                         }}
                         onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(139,92,246,0.3)'; el.style.borderColor = 'rgba(167,139,250,0.5)'; el.style.color = '#fff' }}
                         onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = hoveredWork === i ? 'rgba(139,92,246,0.15)' : 'transparent'; el.style.borderColor = 'rgba(255,255,255,0.08)'; el.style.color = hoveredWork === i ? '#c4b5fd' : 'rgba(255,255,255,0.25)' }}
@@ -954,35 +1024,50 @@ export default function PortfolioPage() {
             style={{
               position: 'fixed', top: 0, left: 0, width: 264, height: 174,
               borderRadius: 14, overflow: 'hidden', pointerEvents: 'none', zIndex: 50,
-              opacity: hoveredWork !== null && PROJECTS[hoveredWork].preview ? 1 : 0,
-              transform: `scale(${hoveredWork !== null && PROJECTS[hoveredWork].preview ? 1 : 0.88})`,
+              display: 'flex', flexDirection: 'column',
+              opacity: hoveredWork !== null && PROJECTS[hoveredWork].url ? 1 : 0,
+              transform: `scale(${hoveredWork !== null && PROJECTS[hoveredWork].url ? 1 : 0.88})`,
               transition: 'opacity 0.25s, transform 0.25s',
               boxShadow: '0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.07)',
             }}
           >
-            {hoveredWork !== null && PROJECTS[hoveredWork].preview && (() => {
+            {hoveredWork !== null && PROJECTS[hoveredWork].url && (() => {
               const proj = PROJECTS[hoveredWork]
-              const prev = proj.preview!
+              const prev = proj.preview
               return (
                 <>
                   {/* Browser chrome */}
-                  <div style={{ background: 'rgba(14,10,28,0.98)', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <div style={{ background: 'rgba(10,8,22,0.98)', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
                     <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#ff5f57', flexShrink: 0 }} />
                     <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#ffbd2e', flexShrink: 0 }} />
                     <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#28ca42', flexShrink: 0 }} />
-                    <div style={{ flex: 1, margin: '0 8px', background: 'rgba(255,255,255,0.06)', borderRadius: 4, padding: '2px 8px', textAlign: 'center' }}>
-                      <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.02em' }}>{prev.domain}</span>
+                    <div style={{ flex: 1, margin: '0 8px', background: 'rgba(255,255,255,0.06)', borderRadius: 4, padding: '2px 8px', textAlign: 'center', overflow: 'hidden' }}>
+                      <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>
+                        {prev?.domain ?? proj.url?.replace(/^https?:\/\//, '')}
+                      </span>
                     </div>
                   </div>
-                  {/* Preview body */}
-                  <div style={{ background: prev.bg, height: 'calc(100% - 28px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px 20px', gap: 6 }}>
-                    <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 9, letterSpacing: '0.35em', textTransform: 'uppercase', color: prev.accent, opacity: 0.8 }}>
-                      {proj.type}
-                    </span>
-                    <h4 style={{ fontFamily: 'ClashDisplay, sans-serif', fontSize: 30, fontWeight: 700, letterSpacing: '-0.03em', color: '#fff', lineHeight: 1, textAlign: 'center' }}>
-                      {proj.name}
-                    </h4>
-                    <div style={{ width: 28, height: 1, background: prev.accent, opacity: 0.5, marginTop: 4 }} />
+
+                  {/* Screenshot body */}
+                  <div style={{ position: 'relative', flex: 1, overflow: 'hidden', background: prev?.bg ?? '#0a0818' }}>
+                    {proj.screenshot && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={proj.screenshot}
+                        alt={`${proj.name} preview`}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', display: 'block' }}
+                      />
+                    )}
+                    {/* Bottom gradient overlay with project name */}
+                    <div style={{
+                      position: 'absolute', bottom: 0, left: 0, right: 0,
+                      background: 'linear-gradient(to top, rgba(6,4,15,0.92) 0%, rgba(6,4,15,0.4) 60%, transparent 100%)',
+                      padding: '12px 14px 10px',
+                    }}>
+                      <span style={{ fontFamily: 'ClashDisplay, sans-serif', fontSize: 15, fontWeight: 700, color: '#fff', letterSpacing: '-0.02em' }}>
+                        {proj.name}
+                      </span>
+                    </div>
                   </div>
                 </>
               )
@@ -990,7 +1075,7 @@ export default function PortfolioPage() {
           </div>
         </section>
         {/* ── WORK → ABOUT SPACER — gives avatar room to travel ── */}
-        <div style={{ height: '40vh' }} />
+        <div className="h-6 md:h-[40vh]" />
 
         {/* ── ABOUT SECTION ──────────────────────── */}
         <section id="about" className="relative min-h-screen py-16 md:py-28">
@@ -1089,6 +1174,38 @@ export default function PortfolioPage() {
           </div>
         </section>
 
+        {/* ── AI CHAT SECTION ────────────────────── */}
+        <section id="ai" className="relative min-h-screen" style={{ background: '#06040f' }}>
+          <div className="max-w-350 mx-auto px-8 md:px-14 py-28 md:pt-[38vh]">
+
+            {/* Content pushed right — avatar occupies left ~40% */}
+            <div className="md:pl-[44%]">
+
+              {/* Label */}
+              <p className="ai-heading" style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 10, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'rgba(167,139,250,0.45)', marginBottom: 16 }}>
+                Ask Arnav&apos;s AI
+              </p>
+
+              {/* Heading */}
+              <h2 className="ai-heading" style={{ fontFamily: 'ClashDisplay, sans-serif', fontSize: 'clamp(36px, 4.5vw, 60px)', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.0, color: 'rgba(255,255,255,0.9)', marginBottom: 12 }}>
+                Chat with<br />
+                <span style={{ WebkitTextStroke: '1px rgba(255,255,255,0.18)', color: 'transparent' }}>my AI.</span>
+              </h2>
+
+              {/* Sub */}
+              <p className="ai-heading" style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, color: 'rgba(148,163,184,0.45)', lineHeight: 1.7, marginBottom: 32, maxWidth: 340 }}>
+                Powered by Gemini — ask about my projects, stack, or how to work together.
+              </p>
+
+              {/* Chat widget */}
+              <div className="ai-body" style={{ pointerEvents: 'auto' }}>
+                <AiChat />
+              </div>
+
+            </div>
+          </div>
+        </section>
+
         {/* ── TECH STACK SECTION ─────────────────── */}
         <section id="tech" className="relative" style={{ background: '#06040f' }}>
           {/* Heading */}
@@ -1100,14 +1217,38 @@ export default function PortfolioPage() {
               <h2 style={{ fontFamily: 'ClashDisplay, sans-serif', fontSize: 'clamp(36px, 4vw, 56px)', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1, color: 'rgba(255,255,255,0.88)' }}>
                 The Stack.
               </h2>
-              <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, color: 'rgba(148,163,184,0.45)', marginTop: 14, lineHeight: 1.6 }}>
+              <p className="hidden md:block" style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, color: 'rgba(148,163,184,0.45)', marginTop: 14, lineHeight: 1.6 }}>
                 Drag the spheres around — each one is a tech I work with.
+              </p>
+              <p className="md:hidden" style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 13, color: 'rgba(148,163,184,0.45)', marginTop: 14, lineHeight: 1.6 }}>
+                The tools I build with.
               </p>
             </div>
           </div>
 
-          {/* Physics canvas — tall enough that balls never clip the edges */}
-          <div style={{ width: '100%', height: '90vh', position: 'relative' }}>
+          {/* Mobile: icon grid */}
+          <div className="md:hidden px-8 pt-2 pb-16">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
+              {TECH_ITEMS.map(({ icon, name }) => (
+                <div key={name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                  <div style={{
+                    width: 60, height: 60, borderRadius: 16,
+                    background: 'rgba(139,92,246,0.06)',
+                    border: '1px solid rgba(139,92,246,0.12)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <i className={icon} style={{ fontSize: 32 }} />
+                  </div>
+                  <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.32)', letterSpacing: '0.05em', textAlign: 'center' }}>
+                    {name}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Desktop: Physics canvas */}
+          <div className="hidden md:block" style={{ width: '100%', height: '90vh', position: 'relative' }}>
             <TechStack />
           </div>
         </section>
@@ -1117,7 +1258,7 @@ export default function PortfolioPage() {
           <div className="max-w-350 mx-auto px-8 md:px-14">
 
             {/* Split layout: left info | right form */}
-            <div className="contact-heading grid grid-cols-1 md:grid-cols-2 gap-14 md:gap-20 items-start">
+            <div className="contact-heading grid grid-cols-1 md:grid-cols-[5fr_6fr] gap-14 md:gap-16 items-start">
 
               {/* LEFT — headline + contact info */}
               <div style={{ paddingTop: 8 }}>
@@ -1147,8 +1288,8 @@ export default function PortfolioPage() {
                   </div>
                 </a>
 
-                {/* Socials */}
-                <div style={{ display: 'flex', gap: 10 }}>
+                {/* Socials — hidden on mobile (shown in footer) */}
+                <div className="hidden md:flex" style={{ gap: 10 }}>
                   {[
                     { href: 'https://github.com/arnavraj-7', icon: <GitHubIcon />, label: 'GitHub' },
                     { href: 'https://www.linkedin.com/in/arnav-raj-7142b8313/', icon: <LinkedInIcon />, label: 'LinkedIn' },
@@ -1164,6 +1305,7 @@ export default function PortfolioPage() {
               </div>
 
               {/* RIGHT — form */}
+              <div className="contact-card">
               <form
                 className="contact-form"
                 onSubmit={async (e) => {
@@ -1239,6 +1381,7 @@ export default function PortfolioPage() {
                   </div>
                 ) : (
                   <button type="submit" disabled={formStatus === 'sending'}
+                    className="contact-submit-btn"
                     style={{ fontFamily: 'ClashDisplay, sans-serif', fontSize: 15, fontWeight: 600, letterSpacing: '-0.01em', padding: '14px 36px', borderRadius: 999, background: 'linear-gradient(135deg, rgba(139,92,246,0.22) 0%, rgba(109,40,217,0.28) 100%)', border: '1px solid rgba(139,92,246,0.4)', color: formStatus === 'error' ? '#fca5a5' : 'rgba(196,181,253,0.95)', cursor: formStatus === 'sending' ? 'default' : 'pointer', alignSelf: 'flex-start', transition: 'all 0.25s ease', opacity: formStatus === 'sending' ? 0.6 : 1 }}
                     onMouseEnter={e => { if (formStatus === 'sending') return; const el = e.currentTarget as HTMLElement; el.style.background = 'linear-gradient(135deg, rgba(139,92,246,0.4) 0%, rgba(109,40,217,0.5) 100%)'; el.style.borderColor = 'rgba(167,139,250,0.7)'; el.style.color = '#fff'; el.style.transform = 'translateY(-2px)'; el.style.boxShadow = '0 8px 30px rgba(139,92,246,0.3)' }}
                     onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'linear-gradient(135deg, rgba(139,92,246,0.22) 0%, rgba(109,40,217,0.28) 100%)'; el.style.borderColor = 'rgba(139,92,246,0.4)'; el.style.color = formStatus === 'error' ? '#fca5a5' : 'rgba(196,181,253,0.95)'; el.style.transform = 'translateY(0)'; el.style.boxShadow = 'none' }}
@@ -1247,6 +1390,7 @@ export default function PortfolioPage() {
                   </button>
                 )}
               </form>
+              </div>{/* end card wrapper */}
 
             </div>
           </div>

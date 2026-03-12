@@ -10,7 +10,7 @@
 @font-face {
   font-family: 'ClashDisplay';
   src: url('/ClashDisplay_Complete/Fonts/WEB/fonts/ClashDisplay-Semibold.woff2') format('woff2');
-  font-weight: 600;
+  font-weight: 600; 
   font-display: swap;
 }
 @font-face {
@@ -70,8 +70,11 @@
   --bg: #06040f;
 }
 
-*, *::before, *::after {
-  cursor: none !important;
+/* Only hide cursor on devices with a fine pointer (mouse) — not touch */
+@media (pointer: fine) {
+  *, *::before, *::after {
+    cursor: none !important;
+  }
 }
 
 html, body {
@@ -158,4 +161,47 @@ body {
 
 .animate-spin-border {
   animation: spin-border 3.5s linear infinite;
+}
+
+/* ─── AI chat typing dots ───────────────────────────── */
+@keyframes typing-dot {
+  0%, 60%, 100% { opacity: 0.25; transform: translateY(0); }
+  30%            { opacity: 1;    transform: translateY(-3px); }
+}
+
+/* ─── AI message fade-in ────────────────────────────── */
+@keyframes msg-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.ai-msg { animation: msg-in 0.22s ease-out both; }
+
+/* hide scrollbar inside chat */
+.ai-scroll::-webkit-scrollbar { display: none; }
+.ai-scroll { scrollbar-width: none; }
+
+/* ─── Contact form — mobile card wrapper ────────────── */
+.contact-card {
+  /* desktop: no decoration */
+}
+@media (max-width: 767px) {
+  .contact-card {
+    border: 1px solid rgba(139, 92, 246, 0.12);
+    background: rgba(6, 4, 15, 0.7);
+    border-radius: 18px;
+    padding: 24px;
+  }
+}
+
+/* ─── Contact submit button ─────────────────────────── */
+.contact-submit-btn {
+  align-self: flex-start;
+}
+@media (max-width: 767px) {
+  .contact-submit-btn {
+    width: 100% !important;
+    align-self: stretch !important;
+    font-size: 13px !important;
+    padding: 11px 20px !important;
+  }
 }
