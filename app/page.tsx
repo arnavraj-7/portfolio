@@ -63,11 +63,12 @@ function AvatarScene({ onReady }: { onReady: () => void }) {
   // 0 = hero (cursor tracking), 1 = work section (fixed look right)
   const scrollWeight = useRef(0)
   const aiProgressRef = useRef(0)
-  // Live circle world-space target — updated every frame from getBoundingClientRect
-  const aiTargetRef = useRef({ x: 0, y: 0 })
+  // Pre-allocated vectors — avoids GC churn in useFrame (60fps)
+  const _unprojectVec = useRef(new THREE.Vector3())
+  const _rayDir = useRef(new THREE.Vector3())
   // ↓ Tweak this single value to adjust avatar vertical position inside circle
-  // More negative = avatar moves DOWN on screen. Start: -0.11, range: -0.05 to -0.25
-  const AI_Y_OFFSET = -0.11
+  // Positive = moves UP. Start: 0.06, range: -0.1 to +0.2
+  const AI_Y_OFFSET = 0.06
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
@@ -176,13 +177,15 @@ function AvatarScene({ onReady }: { onReady: () => void }) {
       onLeaveBack: () => ajModelRef.current?.playAnimation('BreathingIdle'),
     })
 
-    // AI Chat section — scrub drives aiProgressRef smoothly forward AND backward
-    // scrub: 1.4 gives a ~1.4s lag so animation feels weighty and "locks in"
+    // AI Chat section — start when circle is already IN viewport (not below it)
+    // #ai header circle is ~390px from section top; start when section top = 0%
+    // (circle is at 390px / viewport_height from top — typically ~45%)
+    // end when section is scrolled up so circle sits nicely in upper area
     const aiST = ScrollTrigger.create({
       trigger: '#ai',
-      start: 'top 80%',
-      end: 'center 35%',
-      scrub: 1.4,
+      start: 'top 5%',
+      end: 'top -40%',
+      scrub: 1.2,
       onEnter: () => posTimeline.kill(), // stop posTimeline fighting useFrame
       onUpdate: (self) => {
         aiProgressRef.current = self.progress
@@ -219,7 +222,7 @@ function AvatarScene({ onReady }: { onReady: () => void }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  useFrame(() => {
+  useFrame(({ camera }) => {
     if (!modelRef.current) return
 
     // Cache head bone — avoids scene graph traversal every frame
@@ -249,11 +252,16 @@ function AvatarScene({ onReady }: { onReady: () => void }) {
       const clipR = THREE.MathUtils.lerp(maxR, circleR, ep)
       wrapper.style.clipPath = `circle(${clipR}px at ${cx}px ${cy}px)`
 
-      // Also move avatar toward circle center in 3D (best-effort — clip handles precision)
-      const aspect = window.innerWidth / window.innerHeight
-      const viewH = 2 * Math.tan((44 * Math.PI) / 360) * 4
-      const tx = ((cx / window.innerWidth) * 2 - 1) * viewH * aspect / 2
-      const ty = -((cy / window.innerHeight) * 2 - 1) * viewH / 2 + 0.3 + AI_Y_OFFSET
+      // Exact world position via camera.unproject() — mathematically correct for any fov/camera
+      const ndcX = (cx / window.innerWidth) * 2 - 1
+      const ndcY = -((cy / window.innerHeight) * 2 - 1)
+      _unprojectVec.current.set(ndcX, ndcY, 0.5)
+      _unprojectVec.current.unproject(camera)
+      _rayDir.current.copy(_unprojectVec.current).sub(camera.position).normalize()
+      // Intersect ray with z=0 plane (avatar lives at z≈0)
+      const tDist = -camera.position.z / _rayDir.current.z
+      const tx = camera.position.x + _rayDir.current.x * tDist
+      const ty = camera.position.y + _rayDir.current.y * tDist + AI_Y_OFFSET
       groupRef.current.position.x = THREE.MathUtils.lerp(1.6, tx, ep)
       groupRef.current.position.y = THREE.MathUtils.lerp(-0.4, ty, ep)
       groupRef.current.scale.setScalar(THREE.MathUtils.lerp(1, 0.055, ep))
@@ -1279,7 +1287,7 @@ export default function PortfolioPage() {
           {/* Mobile: icon grid */}
           <div className="md:hidden px-8 pt-2 pb-16">
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
-              {TECH_ITEMS.map(({ icon, img, name } as any) => (
+              {TECH_ITEMS.map(({ icon, img, name }) => (
                 <div key={name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
                   <div style={{
                     width: 60, height: 60, borderRadius: 16,

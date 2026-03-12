@@ -65,7 +65,7 @@ RULES:
 - For code/detailed work, say to reach out via email`
 
 const WEB3FORMS_KEY = '715d3934-7f7f-4a64-bb69-d98ab915650c'
-const SEND_TAG_RE = /\[SEND_CONTACT:(\{.*?\})\]/s
+const SEND_TAG_RE = /\[SEND_CONTACT:(\{.*?\})\]/
 
 async function submitContactForm(name: string, email: string, message: string) {
   await fetch('https://api.web3forms.com/submit', {
