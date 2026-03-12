@@ -1226,9 +1226,6 @@ export default function PortfolioPage() {
 
         {/* ── TECH STACK SECTION ─────────────────── */}
         <section id="tech" className="relative" style={{ background: '#06040f', overflow: 'hidden', position: 'sticky', top: 0, zIndex: 30, boxShadow: '0 -40px 80px rgba(0,0,0,0.9)' }}>
-          {/* Parallax ambient orbs */}
-          <div className="parallax-far absolute pointer-events-none" style={{ top: '10%', left: '-8vw', width: '40vw', height: '40vw', background: 'radial-gradient(ellipse 60% 55% at 20% 40%, rgba(109,40,217,0.13) 0%, transparent 70%)', borderRadius: '50%' }} />
-          <div className="parallax-near absolute pointer-events-none" style={{ top: '30%', right: '-6vw', width: '30vw', height: '30vw', background: 'radial-gradient(ellipse 55% 50% at 80% 60%, rgba(139,92,246,0.09) 0%, transparent 70%)', borderRadius: '50%' }} />
           {/* Heading */}
           <div className="max-w-350 mx-auto px-8 md:px-14 pt-24 pb-6">
             <div className="tech-heading">
@@ -1278,10 +1275,7 @@ export default function PortfolioPage() {
         </section>
 
         {/* ── CONTACT SECTION ────────────────────── */}
-        <section id="contact" className="relative py-24" style={{ pointerEvents: 'auto', background: '#06040f', overflow: 'hidden' }}>
-          {/* Parallax ambient orbs */}
-          <div className="parallax-near absolute pointer-events-none" style={{ top: '0%', left: '50%', transform: 'translateX(-50%)', width: '60vw', height: '40vw', background: 'radial-gradient(ellipse 70% 60% at 50% 0%, rgba(109,40,217,0.15) 0%, transparent 65%)', borderRadius: '50%' }} />
-          <div className="parallax-far absolute pointer-events-none" style={{ bottom: '10%', right: '-5vw', width: '25vw', height: '25vw', background: 'radial-gradient(ellipse 60% 55% at 80% 80%, rgba(139,92,246,0.1) 0%, transparent 70%)', borderRadius: '50%' }} />
+        <section id="contact" className="relative py-24" style={{ pointerEvents: 'auto', background: '#06040f', overflow: 'hidden', position: 'sticky', top: 0, zIndex: 40, boxShadow: '0 -40px 80px rgba(0,0,0,0.9)' }}>
           <div className="max-w-350 mx-auto px-8 md:px-14">
 
             {/* Split layout: left info | right form */}
@@ -1425,8 +1419,6 @@ export default function PortfolioPage() {
 
                 {/* ── FOOTER ─────────────────────────────── */}
         <footer style={{ background: '#06040f', position: 'relative', overflow: 'hidden' }}>
-          {/* Parallax ambient orb */}
-          <div className="parallax-far absolute pointer-events-none" style={{ bottom: '20%', left: '10%', width: '35vw', height: '35vw', background: 'radial-gradient(ellipse 65% 55% at 30% 70%, rgba(109,40,217,0.12) 0%, transparent 70%)', borderRadius: '50%' }} />
           {/* Subtle top glow */}
           <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '60%', height: 1, background: 'linear-gradient(to right, transparent, rgba(139,92,246,0.35), transparent)' }} />
 
