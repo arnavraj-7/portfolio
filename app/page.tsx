@@ -527,10 +527,21 @@ export default function PortfolioPage() {
         scrollTrigger: { trigger: '#hero', start: 'top top', end: '35% top', scrub: 1 },
       })
 
-      // Subtle depth: about section dims slightly as AI card enters
+      // ── SECTION STACKING — scale down as next card slides over (no opacity — keeps bg opaque) ──
+      // About dims as AI card enters (about scrolls normally, AI is sticky)
       gsap.to('#about', {
-        opacity: 0.5, scale: 0.97, ease: 'none',
-        scrollTrigger: { trigger: '#ai', start: 'top 85%', end: 'top 20%', scrub: 1.2 },
+        scale: 0.96, opacity: 0.5, ease: 'none',
+        scrollTrigger: { trigger: '#ai', start: 'top 85%', end: 'top 15%', scrub: 1.2 },
+      })
+      // AI scales down as tech slides over it
+      gsap.to('#ai', {
+        scale: 0.94, ease: 'none',
+        scrollTrigger: { trigger: '#tech', start: 'top 80%', end: 'top 10%', scrub: 1.2 },
+      })
+      // Tech scales down as contact slides over it
+      gsap.to('#tech', {
+        scale: 0.94, ease: 'none',
+        scrollTrigger: { trigger: '#contact', start: 'top 80%', end: 'top 10%', scrub: 1.2 },
       })
 
       const rv = 'play none none reverse' // reverse on scroll-up for all reveals
@@ -1127,49 +1138,33 @@ export default function PortfolioPage() {
           <div className="max-w-350 mx-auto px-8 md:px-14 pt-10 md:pt-20">
             <div className="md:pr-[48%]">
 
-              {/* Label */}
               <p className="about-heading" style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 10, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'rgba(167,139,250,0.45)', marginBottom: 20 }}>
                 About Me
               </p>
 
-              {/* Large heading */}
               <h2 className="about-heading" style={{ fontFamily: 'ClashDisplay, sans-serif', fontSize: 'clamp(40px, 5vw, 64px)', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.02, color: 'rgba(255,255,255,0.92)', marginBottom: 28 }}>
                 A builder<br />
                 <span style={{ WebkitTextStroke: '1px rgba(255,255,255,0.18)', color: 'transparent' }}>at heart.</span>
               </h2>
 
-              {/* Divider */}
               <div className="about-item" style={{ width: 40, height: 1, background: 'rgba(139,92,246,0.5)', marginBottom: 28 }} />
 
-              {/* Bio */}
               <p className="about-item" style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 14, lineHeight: 1.85, color: 'rgba(148,163,184,0.6)', marginBottom: 36 }}>
                 I&apos;m Arnav — a full-stack developer and CPO at Dreamvator from India. I care about clean code, thoughtful UI, and the space where product thinking meets engineering.
               </p>
 
-              {/* Currently */}
               <div className="about-item" style={{ marginBottom: 36, display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <a
                   href="https://www.dreamvator.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 10,
-                    padding: '10px 16px', borderRadius: 10,
-                    border: '1px solid rgba(139,92,246,0.2)',
-                    background: 'rgba(139,92,246,0.07)',
-                    pointerEvents: 'auto', textDecoration: 'none',
-                    transition: 'all 0.25s',
-                  }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '10px 16px', borderRadius: 10, border: '1px solid rgba(139,92,246,0.2)', background: 'rgba(139,92,246,0.07)', pointerEvents: 'auto', textDecoration: 'none', transition: 'all 0.25s', alignSelf: 'flex-start' }}
                   onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = 'rgba(167,139,250,0.45)'; el.style.background = 'rgba(139,92,246,0.14)' }}
                   onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = 'rgba(139,92,246,0.2)'; el.style.background = 'rgba(139,92,246,0.07)' }}
                 >
                   <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#4ade80', flexShrink: 0, boxShadow: '0 0 8px rgba(74,222,128,0.7)' }} />
-                  <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.02em' }}>
-                    Currently building
-                  </span>
-                  <span style={{ fontFamily: 'ClashDisplay, sans-serif', fontSize: 13, fontWeight: 600, color: 'rgba(196,181,253,0.9)', letterSpacing: '-0.01em' }}>
-                    Dreamvator
-                  </span>
+                  <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.02em' }}>Currently building</span>
+                  <span style={{ fontFamily: 'ClashDisplay, sans-serif', fontSize: 13, fontWeight: 600, color: 'rgba(196,181,253,0.9)', letterSpacing: '-0.01em' }}>Dreamvator</span>
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(167,139,250,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 2 }}>
                     <path d="M7 17L17 7M17 7H7M17 7v10" />
                   </svg>
@@ -1182,13 +1177,10 @@ export default function PortfolioPage() {
                     India
                   </span>
                   <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.1)' }} />
-                  <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.04em' }}>
-                    Open to freelance &amp; collabs
-                  </span>
+                  <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.04em' }}>Open to freelance &amp; collabs</span>
                 </div>
               </div>
 
-              {/* What I do */}
               <div className="about-item" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 28 }}>
                 <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 10, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(167,139,250,0.4)', marginBottom: 18 }}>
                   What I do
@@ -1200,12 +1192,7 @@ export default function PortfolioPage() {
                     'Crafting interactions that feel alive',
                     'Integrating AI to power smarter products',
                   ].map((item, i) => (
-                    <div key={item} style={{
-                      display: 'flex', alignItems: 'center', gap: 14,
-                      fontFamily: 'Satoshi, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.42)',
-                      padding: '11px 0',
-                      borderBottom: i < 4 ? '1px solid rgba(255,255,255,0.04)' : 'none',
-                    }}>
+                    <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 14, fontFamily: 'Satoshi, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.42)', padding: '11px 0', borderBottom: i < 3 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
                       <span style={{ fontFamily: 'ClashDisplay, sans-serif', fontSize: 10, color: 'rgba(139,92,246,0.5)', letterSpacing: '0.1em' }}>
                         {String(i + 1).padStart(2, '0')}
                       </span>
@@ -1220,7 +1207,7 @@ export default function PortfolioPage() {
         </section>
 
         {/* ── AI CHAT SECTION ────────────────────── */}
-        <section id="ai" className="relative" style={{ background: '#06040f', borderRadius: '20px 20px 0 0', boxShadow: '0 -8px 40px rgba(0,0,0,0.8), inset 0 1px 0 rgba(139,92,246,0.15)' }}>
+        <section id="ai" className="relative min-h-[160vh]" style={{ background: '#06040f', position: 'sticky', top: 0, zIndex: 20, borderRadius: '20px 20px 0 0', boxShadow: '0 -8px 40px rgba(0,0,0,0.8), inset 0 1px 0 rgba(139,92,246,0.15)' }}>
           <div className="max-w-350 mx-auto px-8 md:px-14 pt-10 pb-12 md:pt-12 md:pb-16">
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
 
@@ -1250,9 +1237,9 @@ export default function PortfolioPage() {
         </section>
 
         {/* ── TECH STACK SECTION ─────────────────── */}
-        <section id="tech" className="relative" style={{ background: '#06040f', overflow: 'hidden', borderRadius: '20px 20px 0 0', boxShadow: '0 -8px 40px rgba(0,0,0,0.8), inset 0 1px 0 rgba(139,92,246,0.12)' }}>
+        <section id="tech" className="relative" style={{ background: '#06040f', overflow: 'hidden', position: 'sticky', top: 0, zIndex: 30, borderRadius: '20px 20px 0 0', boxShadow: '0 -8px 40px rgba(0,0,0,0.8), inset 0 1px 0 rgba(139,92,246,0.12)' }}>
           {/* Heading */}
-          <div className="max-w-350 mx-auto px-8 md:px-14 pt-24 pb-6">
+          <div className="max-w-350 mx-auto px-8 md:px-14 pt-12 pb-6">
             <div className="tech-heading">
               <p style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 10, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'rgba(167,139,250,0.45)', marginBottom: 14 }}>
                 Tools &amp; Technologies
@@ -1300,7 +1287,7 @@ export default function PortfolioPage() {
         </section>
 
         {/* ── CONTACT SECTION ────────────────────── */}
-        <section id="contact" className="relative py-24" style={{ pointerEvents: 'auto', background: '#06040f', overflow: 'hidden', borderRadius: '20px 20px 0 0', boxShadow: '0 -8px 40px rgba(0,0,0,0.8), inset 0 1px 0 rgba(139,92,246,0.12)' }}>
+        <section id="contact" className="relative py-24" style={{ pointerEvents: 'auto', background: '#06040f', overflow: 'hidden', position: 'sticky', top: 0, zIndex: 40, borderRadius: '20px 20px 0 0', boxShadow: '0 -8px 40px rgba(0,0,0,0.8), inset 0 1px 0 rgba(139,92,246,0.12)' }}>
           <div className="max-w-350 mx-auto px-8 md:px-14">
 
             {/* Split layout: left info | right form */}
@@ -1440,12 +1427,8 @@ export default function PortfolioPage() {
 
             </div>
           </div>
-        </section>
-
-                {/* ── FOOTER ─────────────────────────────── */}
-        <footer style={{ background: '#06040f', position: 'relative', overflow: 'hidden' }}>
-          {/* Subtle top glow */}
-          <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '60%', height: 1, background: 'linear-gradient(to right, transparent, rgba(139,92,246,0.35), transparent)' }} />
+          {/* ── FOOTER ─────────────────────────────── */}
+          <footer style={{ marginTop:'40px',background: '#06040f', position: 'relative', overflow: 'hidden', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
 
           {/* Main footer body */}
           <div className="max-w-350 mx-auto px-6 md:px-14" style={{ paddingTop: 56, paddingBottom: 32 }}>
@@ -1503,7 +1486,8 @@ export default function PortfolioPage() {
               </span>
             </div>
           </div>
-        </footer>
+          </footer>
+        </section>
       </main>
     </div>
   )
