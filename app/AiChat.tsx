@@ -6,7 +6,7 @@ import { useState, useRef, useEffect, memo } from 'react'
    GEMINI CONFIG — key lives in .env.local (server-side only)
 ───────────────────────────────────────────────────── */
 
-const SYSTEM_PROMPT = `You are AJ — the personal AI of Arnav Raj, speaking in first person as Arnav.
+const SYSTEM_PROMPT = `You are ARNAV — the personal AI of Arnav Raj, speaking in first person as Arnav.
 You ONLY answer questions about Arnav Raj. For any unrelated topic, respond:
 "That's outside what I can chat about here — try asking about my projects, skills, or how to reach me!"
 
@@ -306,7 +306,7 @@ export const AiChat = memo(function AiChat() {
                   fontSize: 9, fontFamily: 'ClashDisplay, sans-serif', fontWeight: 700,
                   color: '#c4b5fd', alignSelf: 'flex-end', marginBottom: 1,
                 }}>
-                  AJ
+                  AR
                 </div>
               )}
               <div style={{
@@ -345,7 +345,7 @@ export const AiChat = memo(function AiChat() {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 9, fontFamily: 'ClashDisplay, sans-serif', fontWeight: 700, color: '#c4b5fd',
               flexShrink: 0,
-            }}>AJ</div>
+            }}>AR</div>
             <div style={{
               padding: '10px 16px', borderRadius: '4px 18px 18px 18px',
               background: 'rgba(255,255,255,0.05)',

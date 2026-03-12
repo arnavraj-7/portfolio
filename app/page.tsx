@@ -544,7 +544,7 @@ export default function PortfolioPage() {
         scrollTrigger: { trigger: '#contact', start: 'top 80%', end: 'top 10%', scrub: 1.2 },
       })
 
-      const rv = 'play none none reverse' // reverse on scroll-up for all reveals
+      const rv = 'play none play reverse' // re-play on scroll-back-down, reverse on scroll-up
 
       // Work section entrance
       gsap.fromTo('.work-heading',
@@ -912,7 +912,7 @@ export default function PortfolioPage() {
                 Engineering digital experiences that matter.
               </p>
               {/* CTAs above the blob — moved before the avatar spacer */}
-              <div className="hero-item opacity-0 flex flex-col gap-3 items-center" style={{ pointerEvents: 'auto' }}>
+              <div className="hero-item opacity-0 flex flex-col gap-3 items-center" style={{ pointerEvents: 'auto', marginTop: 96 }}>
                 <AnimatedBorderButton href="#work">View Work →</AnimatedBorderButton>
                 <a href="mailto:arnavrajcodes@gmail.com" className="text-sm" style={{ fontFamily: 'Satoshi, sans-serif', color: 'rgba(255,255,255,0.35)' }}>
                   Let&apos;s Connect →
