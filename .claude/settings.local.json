@@ -22,7 +22,9 @@
       "WebFetch(domain:blog.olivierlarose.com)",
       "WebFetch(domain:skiper-ui.com)",
       "WebFetch(domain:www.terluinwebdesign.nl)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(curl -s -X POST \"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyA15S_2xfZcNXUMrYtAygII05M5cjH0xFo\" -H \"Content-Type: application/json\" -d '{\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"Say hello in one word\"}]}]}' 2>&1)",
+      "Bash(curl -s -X POST \"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyA15S_2xfZcNXUMrYtAygII05M5cjH0xFo\" -H \"Content-Type: application/json\" -d '{\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"Say hello in one word\"}]}]}' 2>&1)"
     ]
   }
 }
