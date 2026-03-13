@@ -1,11 +1,5 @@
 import type { Metadata } from "next";
-import { Geist_Mono } from "next/font/google";
 import "./globals.css";
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Arnav Raj — Full Stack Developer & CPO",
@@ -28,9 +22,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css" />
+        {/* Preload primary fonts so they're ready before first paint */}
+        <link rel="preload" href="/ClashDisplay_Complete/Fonts/WEB/fonts/ClashDisplay-Bold.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        <link rel="preload" href="/Satoshi_Complete/Fonts/WEB/fonts/Satoshi-Regular.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        {/* Devicons loaded async — media="print" prevents render-blocking, script swaps to "all" after load */}
+        <link rel="stylesheet" type="text/css" id="devicons-css" href="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css" media="print" />
+        <script dangerouslySetInnerHTML={{ __html: `(function(){var l=document.getElementById('devicons-css');if(l)l.addEventListener('load',function(){l.media='all'})})()` }} />
       </head>
-      <body className={`${geistMono.variable} antialiased`}>
+      <body className="antialiased">
         {children}
       </body>
     </html>

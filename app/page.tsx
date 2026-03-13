@@ -544,7 +544,7 @@ export default function PortfolioPage() {
         scrollTrigger: { trigger: '#contact', start: 'top 80%', end: 'top 10%', scrub: 1.2 },
       })
 
-      const rv = 'play none play none' // play on enter + re-play on enter-back; never forcefully reverse
+      const rv = 'restart none restart none' // restart from "from" state on every entry
 
       // Work section entrance
       gsap.fromTo('.work-heading',
@@ -692,7 +692,7 @@ export default function PortfolioPage() {
       {isDesktop && <AvatarCanvas onReady={handleAvatarReady} active={avatarActive} />}
 
       {/* ── NAVBAR ─────────────────────────────────── */}
-      <nav ref={navRef} className="fixed top-0 left-0 right-0 z-50 opacity-0">
+      <nav ref={navRef} className="fixed top-0 left-0 right-0 z-50 opacity-0 hidden md:block">
         <div className="max-w-350 mx-auto px-8 md:px-14 py-5 flex items-center justify-between">
 
           {/* Left — intentionally empty */}
