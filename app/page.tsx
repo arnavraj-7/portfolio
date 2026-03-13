@@ -386,7 +386,7 @@ export default function PortfolioPage() {
   // Stop 3D canvas rendering once avatar is fully faded (saves GPU)
   const [avatarActive, setAvatarActive] = useState(true)
 
-  // Avatar fade — starts as about section scrolls through, completes before AI
+  // Avatar fade — fades out as about section scrolls through, re-enables only when back at hero top
   useEffect(() => {
     if (!isDesktop) return
     const ctx = gsap.context(() => {
@@ -399,7 +399,15 @@ export default function PortfolioPage() {
           end: 'bottom 55%',
           scrub: 1,
           onLeave: () => setAvatarActive(false),
-          onLeaveBack: () => setAvatarActive(true),
+        },
+      })
+      // Re-enable avatar only when user scrolls all the way back to hero
+      ScrollTrigger.create({
+        trigger: '#hero',
+        start: 'top 10%',
+        onEnterBack: () => {
+          setAvatarActive(true)
+          gsap.to('.avatar-canvas', { opacity: 1, duration: 0.5, ease: 'power2.out' })
         },
       })
     })
@@ -926,7 +934,7 @@ export default function PortfolioPage() {
                 Engineering digital experiences that matter.
               </p>
               {/* CTAs above the blob — moved before the avatar spacer */}
-              <div className="hero-item opacity-0 flex flex-col gap-3 items-center" style={{ pointerEvents: 'auto', marginTop: 96 }}>
+              <div className="hero-item opacity-0 flex flex-col gap-3 items-center" style={{ pointerEvents: 'auto', marginTop: 76 }}>
                 <AnimatedBorderButton href="#work">View Work →</AnimatedBorderButton>
                 <a href="mailto:arnavrajcodes@gmail.com" className="text-sm" style={{ fontFamily: 'Satoshi, sans-serif', color: 'rgba(255,255,255,0.35)' }}>
                   Let&apos;s Connect →
