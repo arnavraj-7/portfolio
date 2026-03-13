@@ -544,7 +544,7 @@ export default function PortfolioPage() {
         scrollTrigger: { trigger: '#contact', start: 'top 80%', end: 'top 10%', scrub: 1.2 },
       })
 
-      const rv = 'play none play reverse' // re-play on scroll-back-down, reverse on scroll-up
+      const rv = 'play none play none' // play on enter + re-play on enter-back; never forcefully reverse
 
       // Work section entrance
       gsap.fromTo('.work-heading',
@@ -860,6 +860,20 @@ export default function PortfolioPage() {
                       <path d="M5 12h14M12 5l7 7-7 7" />
                     </svg>
                   </a>
+                  <a
+                    href="/resume.pdf"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-sm transition-all duration-300"
+                    style={{ fontFamily: 'Satoshi, sans-serif', color: 'rgba(167,139,250,0.5)', paddingLeft: 2 }}
+                    onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = 'rgba(196,181,253,0.9)'; el.style.transform = 'translateX(4px)' }}
+                    onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = 'rgba(167,139,250,0.5)'; el.style.transform = 'translateX(0)' }}
+                  >
+                    Resume
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                    </svg>
+                  </a>
                 </div>
 
                 {/* India */}
@@ -916,6 +930,18 @@ export default function PortfolioPage() {
                 <AnimatedBorderButton href="#work">View Work →</AnimatedBorderButton>
                 <a href="mailto:arnavrajcodes@gmail.com" className="text-sm" style={{ fontFamily: 'Satoshi, sans-serif', color: 'rgba(255,255,255,0.35)' }}>
                   Let&apos;s Connect →
+                </a>
+                <a
+                  href="/resume.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm flex items-center gap-1.5"
+                  style={{ fontFamily: 'Satoshi, sans-serif', color: 'rgba(167,139,250,0.6)' }}
+                >
+                  Resume
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                  </svg>
                 </a>
               </div>
               <div className="hero-item opacity-0 flex items-center gap-6" style={{ pointerEvents: 'auto', color: 'rgba(255,255,255,0.2)' }}>
