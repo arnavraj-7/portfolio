@@ -170,11 +170,9 @@ function AvatarScene({ onReady }: { onReady: () => void }) {
       onLeaveBack: () => ajModelRef.current?.playAnimation('BreathingIdle'),
     })
 
-    // Kill posTimeline when AI section enters so it doesn't fight the fade
     const aiEnterTrigger = ScrollTrigger.create({
       trigger: '#ai',
       start: 'top 80%',
-      onEnter: () => posTimeline.kill(),
       onLeaveBack: () => ajModelRef.current?.playAnimation('BreathingIdle'),
     })
 
@@ -390,16 +388,20 @@ export default function PortfolioPage() {
   useEffect(() => {
     if (!isDesktop) return
     const ctx = gsap.context(() => {
-      gsap.to('.avatar-canvas', {
-        opacity: 0,
-        ease: 'power2.in',
-        scrollTrigger: {
-          trigger: '#about',
-          start: 'top 30%',
-          end: 'bottom 55%',
-          scrub: 1,
-          onLeave: () => setAvatarActive(false),
+      // Smooth directional fade — scrubs going down, freezes at 0 on back-scroll
+      ScrollTrigger.create({
+        trigger: '#ai',
+        start: 'top 90%',
+        end: 'top 20%',
+        onUpdate: (self) => {
+          const el = document.querySelector('.avatar-canvas') as HTMLElement
+          if (!el) return
+          if (self.direction === 1 || self.progress < 0.99) {
+            el.style.opacity = String(Math.max(0, 1 - self.progress))
+          }
+          // Once fully faded + scrolling back: stay at 0 (frozen — no frozen-pose bleed)
         },
+        onLeave: () => setAvatarActive(false),
       })
       // Re-enable avatar only when user scrolls all the way back to hero
       ScrollTrigger.create({
@@ -407,7 +409,8 @@ export default function PortfolioPage() {
         start: 'top 10%',
         onEnterBack: () => {
           setAvatarActive(true)
-          gsap.to('.avatar-canvas', { opacity: 1, duration: 0.5, ease: 'power2.out' })
+          const el = document.querySelector('.avatar-canvas') as HTMLElement
+          if (el) el.style.opacity = '1'
         },
       })
     })
@@ -993,7 +996,7 @@ export default function PortfolioPage() {
                   </h2>
                 </div>
                 <span style={{ fontFamily: 'Satoshi, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.14)', letterSpacing: '0.08em', paddingBottom: 6 }}>
-                  2024—2025
+                  2025—2026
                 </span>
               </div>
 
